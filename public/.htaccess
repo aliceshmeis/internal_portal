@@ -1,0 +1,18 @@
+# Enable RewriteEngine
+RewriteEngine On
+
+# Set base directory
+RewriteBase /internal_portal/public/
+
+# If the request is for a real file or directory, serve it directly
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Otherwise, route everything through index.php
+RewriteRule ^(.*)$ index.php?url=$1 [QSA,L]
+
+# Prevent directory listing
+Options -Indexes
+
+# Set default index file
+DirectoryIndex index.php
