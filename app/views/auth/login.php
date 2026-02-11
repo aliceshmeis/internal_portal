@@ -1,3 +1,22 @@
+<?php
+// Start session
+session_start();
+
+// Include Google OAuth configuration
+require_once __DIR__ . '/../../../config/google.php';
+
+// Generate Google OAuth URL
+$params = [
+    'client_id' => GOOGLE_CLIENT_ID,
+    'redirect_uri' => GOOGLE_REDIRECT_URI,
+    'response_type' => 'code',
+    'scope' => GOOGLE_SCOPE,
+    'access_type' => 'offline',
+    'prompt' => 'consent'
+];
+
+$googleLoginUrl = GOOGLE_AUTH_URL . '?' . http_build_query($params);
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>

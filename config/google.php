@@ -4,9 +4,9 @@
  */
 
 // YOUR Google OAuth credentials
-define('GOOGLE_CLIENT_ID', '[565661564000-j0ps9jpaihepbeu4ashmajmeq3lar324.apps.googleusercontent.com](http://565661564000-j0ps9jpaihepbeu4ashmajmeq3lar324.apps.googleusercontent.com/)');
+define('GOOGLE_CLIENT_ID', '565661564000-j0ps9jpaihepbeu4ashmajmeq3lar324.apps.googleusercontent.com');
 define('GOOGLE_CLIENT_SECRET', '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');
-define('GOOGLE_REDIRECT_URI', 'http://localhost/internal_portal/auth/google-callback');
+define('GOOGLE_REDIRECT_URI', 'http://localhost/internal_portal/app/views/auth/google-callback.php');
 
 // Google OAuth URLs
 define('GOOGLE_AUTH_URL', 'https://accounts.google.com/o/oauth2/v2/auth');
