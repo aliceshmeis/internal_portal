@@ -1,0 +1,500 @@
+openapi: 3.0.0
+info:
+  title: Internal Portal API
+  description: Ticketing & Assets Management System API Documentation
+  version: 1.0.0
+  contact:
+    name: Alice Shmeis
+    email: aliceshmeis4@gmail.com
+
+servers:
+  - url: http://localhost/internal_portal/api/v1
+    description: Local development server
+
+tags:
+  - name: Tickets
+    description: Ticket management endpoints
+  - name: Assets
+    description: Asset management endpoints
+  - name: Stock
+    description: Stock management endpoints
+  - name: Purchase Orders
+    description: Purchase order management endpoints
+
+components:
+  securitySchemes:
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: PHPSESSID
+      
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: Error message
+        errors:
+          type: array
+          items:
+            type: string
+
+security:
+  - CookieAuth: []
+
+paths:
+  # ==========================================
+  # TICKETS ENDPOINTS
+  # ==========================================
+  /tickets/create.php:
+    post:
+      tags:
+        - Tickets
+      summary: Create a new ticket
+      description: Creates a new ticket in the system
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - description
+              properties:
+                title:
+                  type: string
+                  example: Broken printer in office
+                description:
+                  type: string
+                  example: The printer on the 2nd floor is not working
+                priority:
+                  type: string
+                  enum: [Low, Medium, High, Critical]
+                  example: High
+      responses:
+        '201':
+          description: Ticket created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Ticket created successfully
+                  data:
+                    type: object
+                    properties:
+                      ticket_id:
+                        type: integer
+                        example: 1
+                      ticket_number:
+                        type: string
+                        example: TKT-20260213-ABC123
+                      title:
+                        type: string
+                      status:
+                        type: string
+                        example: Open
+                      priority:
+                        type: string
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          
+  /tickets/list.php:
+    get:
+      tags:
+        - Tickets
+      summary: List all tickets
+      description: Get all tickets (filtered by role and campus)
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [Open, In Progress, Pending, Resolved, Closed]
+          description: Filter by ticket status
+        - name: priority
+          in: query
+          schema:
+            type: string
+            enum: [Low, Medium, High, Critical]
+          description: Filter by ticket priority
+      responses:
+        '200':
+          description: Tickets retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  count:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      
+  /tickets/show.php:
+    get:
+      tags:
+        - Tickets
+      summary: Get single ticket
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Ticket ID
+      responses:
+        '200':
+          description: Ticket retrieved successfully
+        '404':
+          description: Ticket not found
+
+  /tickets/update.php:
+    put:
+      tags:
+        - Tickets
+      summary: Update ticket
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  type: integer
+                  example: 1
+                title:
+                  type: string
+                description:
+                  type: string
+                status:
+                  type: string
+                  enum: [Open, In Progress, Pending, Resolved, Closed]
+                priority:
+                  type: string
+                  enum: [Low, Medium, High, Critical]
+                assigned_to:
+                  type: integer
+                  nullable: true
+      responses:
+        '200':
+          description: Ticket updated successfully
+          
+  /tickets/close.php:
+    post:
+      tags:
+        - Tickets
+      summary: Close ticket
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  type: integer
+                  example: 1
+      responses:
+        '200':
+          description: Ticket closed successfully
+
+  # ==========================================
+  # ASSETS ENDPOINTS
+  # ==========================================
+  /assets/create.php:
+    post:
+      tags:
+        - Assets
+      summary: Create a new asset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - category
+              properties:
+                name:
+                  type: string
+                  example: Dell XPS 15 Laptop
+                category:
+                  type: string
+                  enum: [Laptop, Printer, Network Equipment, Furniture, Other]
+                  example: Laptop
+                description:
+                  type: string
+                serial_number:
+                  type: string
+                  example: DLL-XPS-2024-001
+                purchase_date:
+                  type: string
+                  format: date
+                  example: "2024-01-15"
+                purchase_cost:
+                  type: number
+                  example: 1500.00
+                warranty_expiry:
+                  type: string
+                  format: date
+      responses:
+        '201':
+          description: Asset created successfully
+          
+  /assets/list.php:
+    get:
+      tags:
+        - Assets
+      summary: List all assets
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [Laptop, Printer, Network Equipment, Furniture, Other]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [Available, In Use, Maintenance, Retired]
+      responses:
+        '200':
+          description: Assets retrieved successfully
+          
+  /assets/show.php:
+    get:
+      tags:
+        - Assets
+      summary: Get single asset
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Asset retrieved successfully
+
+  # ==========================================
+  # STOCK ENDPOINTS
+  # ==========================================
+  /stock/create.php:
+    post:
+      tags:
+        - Stock
+      summary: Create stock item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - item_name
+                - quantity
+              properties:
+                item_name:
+                  type: string
+                  example: A4 Paper
+                category:
+                  type: string
+                  example: Office Supplies
+                quantity:
+                  type: integer
+                  example: 50
+                unit:
+                  type: string
+                  example: boxes
+                minimum_threshold:
+                  type: integer
+                  example: 20
+      responses:
+        '201':
+          description: Stock item created successfully
+          
+  /stock/list.php:
+    get:
+      tags:
+        - Stock
+      summary: List all stock items
+      description: Get all stock items with low stock alerts
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: low_stock
+          in: query
+          schema:
+            type: boolean
+          description: Filter only low stock items
+      responses:
+        '200':
+          description: Stock items retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  count:
+                    type: integer
+                  low_stock_count:
+                    type: integer
+                  alert:
+                    type: string
+                    nullable: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+
+  # ==========================================
+  # PURCHASE ORDERS ENDPOINTS
+  # ==========================================
+  /purchase-orders/create.php:
+    post:
+      tags:
+        - Purchase Orders
+      summary: Create purchase order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - supplier
+                - items
+              properties:
+                supplier:
+                  type: string
+                  example: Tech Supplies Inc
+                notes:
+                  type: string
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      item_name:
+                        type: string
+                        example: Laptop Dell XPS 15
+                      quantity:
+                        type: integer
+                        example: 5
+                      unit_price:
+                        type: number
+                        example: 1200.00
+                      notes:
+                        type: string
+      responses:
+        '201':
+          description: Purchase order created successfully
+          
+  /purchase-orders/submit.php:
+    post:
+      tags:
+        - Purchase Orders
+      summary: Submit PO for approval
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  type: integer
+                  example: 1
+      responses:
+        '200':
+          description: PO submitted successfully
+          
+  /purchase-orders/approve.php:
+    post:
+      tags:
+        - Purchase Orders
+      summary: Approve or reject PO (Admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+                - action
+              properties:
+                id:
+                  type: integer
+                  example: 1
+                action:
+                  type: string
+                  enum: [approve, reject]
+                  example: approve
+                reason:
+                  type: string
+                  description: Required when rejecting
+      responses:
+        '200':
+          description: PO approved/rejected successfully
+          
+  /purchase-orders/receive.php:
+    post:
+      tags:
+        - Purchase Orders
+      summary: Mark PO as received (auto-updates stock)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  type: integer
+                  example: 1
+                notes:
+                  type: string
+      responses:
+        '200':
+          description: PO received and stock updated successfully
