@@ -1,13 +1,15 @@
 <?php
 session_start();
 
+// Check authentication
 if (!isset($_SESSION['user_id'])) {
     header('Location: /internal_portal/app/views/auth/login.php');
     exit;
 }
 
+// Admin only
 if ($_SESSION['role'] !== 'Admin') {
-    header('Location: /internal_portal/app/views/dashboard/staff-dashboard.php');
+    header('Location: /internal_portal/app/views/dashboard/dashboard.php');
     exit;
 }
 
@@ -19,10 +21,11 @@ $user_role = $_SESSION['role'];
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Internal Portal</title>
+    <title>Users Management - Internal Portal</title>
     <link rel="stylesheet" href="/internal_portal/public/css/main-style.css">
     <link rel="stylesheet" href="/internal_portal/public/css/admin-layout.css">
-    <link rel="stylesheet" href="/internal_portal/public/css/dashboard.css">
+    <link rel="stylesheet" href="/internal_portal/public/css/tickets.css">
+    <link rel="stylesheet" href="/internal_portal/public/css/users.css">
 </head>
 <body>
     <div class="mobile-overlay" id="mobileOverlay"></div>
@@ -38,7 +41,7 @@ $user_role = $_SESSION['role'];
             <nav class="sidebar-nav">
                 <div class="sidebar-nav-section">
                     <div class="sidebar-nav-section-title">Main</div>
-                    <a href="dashboard.php" class="sidebar-nav-item active">
+                    <a href="../dashboard/dashboard.php" class="sidebar-nav-item">
                         <span class="sidebar-nav-icon icon-dashboard"></span>
                         <span class="sidebar-nav-text">Dashboard</span>
                     </a>
@@ -66,7 +69,7 @@ $user_role = $_SESSION['role'];
                 
                 <div class="sidebar-nav-section">
                     <div class="sidebar-nav-section-title">Settings</div>
-                    <a href="../users/list.php" class="sidebar-nav-item">
+                    <a href="list.php" class="sidebar-nav-item active">
                         <span class="sidebar-nav-icon icon-users"></span>
                         <span class="sidebar-nav-text">Users</span>
                     </a>
@@ -87,28 +90,26 @@ $user_role = $_SESSION['role'];
 
         <!-- Main Content -->
         <main class="main-content">
-            <!-- Professional Topbar -->
+            <!-- Topbar -->
             <div class="topbar">
                 <div class="topbar-left">
                     <button class="hamburger-menu" id="hamburgerMenu">☰</button>
                     <div class="breadcrumb">
-                        <a href="dashboard.php" class="breadcrumb-item">Home</a>
+                        <a href="../dashboard/dashboard.php" class="breadcrumb-item">Home</a>
                         <span class="breadcrumb-separator">/</span>
-                        <span class="breadcrumb-item active">Dashboard</span>
+                        <span class="breadcrumb-item active">Users</span>
                     </div>
                 </div>
                 
                 <div class="topbar-search">
-                    <input type="text" placeholder="Search...">
+                    <input type="text" placeholder="Search tickets, assets, users...">
                 </div>
                 
                 <div class="topbar-right">
+                    <button class="btn btn-primary" onclick="openCreateModal()">+ New User</button>
                     <button class="topbar-icon-btn" title="Notifications">
                         🔔
                         <span class="badge">3</span>
-                    </button>
-                    <button class="topbar-icon-btn" title="Settings">
-                        ⚙
                     </button>
                     <div class="header-user">
                         <div class="header-user-avatar">
@@ -122,74 +123,85 @@ $user_role = $_SESSION['role'];
                 </div>
             </div>
 
-            <!-- Page Content -->
             <div class="page-content">
-                <h1 style="font-size: 24px; font-weight: 600; margin-bottom: 8px; color: var(--color-text-primary);">
-                    Welcome back, <?php echo htmlspecialchars(explode(' ', $user_name)[0]); ?>
-                </h1>
-                <p style="color: var(--color-text-secondary); margin-bottom: 32px; font-size: 14px;">
-                    Here's what's happening with your portal today
-                </p>
-
-                <!-- Loading State -->
-                <div id="loading" style="text-align: center; padding: 60px;">
-                    <div style="width: 40px; height: 40px; border: 3px solid var(--color-border-light); border-top-color: var(--color-primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
-                    <p style="color: var(--color-text-secondary); font-size: 14px;">Loading dashboard...</p>
+                <div class="page-header">
+                    <h1 style="font-size: 24px; font-weight: 600; margin-bottom: 8px; color: var(--color-text-primary);">User Management</h1>
+                    <p style="color: var(--color-text-secondary); margin-bottom: 32px; font-size: 14px;">Manage system users and permissions</p>
                 </div>
 
-                <!-- Dashboard Content -->
-                <div id="dashboardContent" style="display: none;">
-                    <div class="kpi-grid" id="kpiCards"></div>
-                    
-                    <div class="charts-grid">
-                        <div class="chart-card">
-                            <div class="chart-header">
-                                <div>
-                                    <div class="chart-title">Tickets by Status</div>
-                                    <div class="chart-subtitle">Current distribution</div>
-                                </div>
+                <!-- Filters -->
+                <div class="filters-bar">
+                    <div class="filters-row">
+                        <div class="filter-group">
+                            <label class="filter-label">Search Users</label>
+                            <div class="search-input-wrapper">
+                                <input type="text" class="search-input" id="search" placeholder="Search by name or email...">
                             </div>
-                            <div class="chart-placeholder">Chart visualization</div>
                         </div>
                         
-                        <div class="chart-card">
-                            <div class="chart-header">
-                                <div>
-                                    <div class="chart-title">Activity Trend</div>
-                                    <div class="chart-subtitle">Last 7 days</div>
-                                </div>
-                            </div>
-                            <div class="chart-placeholder">Chart visualization</div>
+                        <div class="filter-group">
+                            <label class="filter-label">Role</label>
+                            <select class="filter-select" id="role-filter">
+                                <option value="">All Roles</option>
+                                <option value="Admin">Admin</option>
+                                <option value="Staff">Staff</option>
+                                <option value="Asset Manager">Asset Manager</option>
+                                <option value="Viewer">Viewer</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label class="filter-label">Status</label>
+                            <select class="filter-select" id="status-filter">
+                                <option value="">All Statuses</option>
+                                <option value="1">Active</option>
+                                <option value="0">Inactive</option>
+                            </select>
+                        </div>
+                        
+                        <button class="btn-filter" onclick="applyFilters()">Apply</button>
+                    </div>
+                </div>
+
+                <!-- Users Table -->
+                <div class="table-card">
+                    <div id="loading">
+                        <div class="loading-state">
+                            <div class="spinner"></div>
+                            <p>Loading users...</p>
                         </div>
                     </div>
-
-                    <div class="tables-grid">
-                        <div class="table-card">
-                            <div class="table-card-header">
-                                <h3 class="table-card-title">Recent Tickets</h3>
-                                <a href="../tickets/list.php" class="table-card-action">View All →</a>
-                            </div>
-                            <div class="table-wrapper">
-                                <table class="table" style="margin: 0;">
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Title</th>
-                                            <th>Priority</th>
-                                            <th>Status</th>
-                                            <th>Created</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="recentTickets"></tbody>
-                                </table>
-                            </div>
+                    
+                    <div id="error" style="display: none; padding: 24px; text-align: center; color: var(--color-danger);"></div>
+                    
+                    <div id="users-container" style="display: none;">
+                        <div class="table-wrapper">
+                            <table class="users-table">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Role</th>
+                                        <th>Campus</th>
+                                        <th>Status</th>
+                                        <th>Last Login</th>
+                                        <th style="text-align: center;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-tbody"></tbody>
+                            </table>
                         </div>
-
-                        <div class="table-card">
-                            <div class="table-card-header">
-                                <h3 class="table-card-title">Activity</h3>
-                            </div>
-                            <div class="activity-feed" id="activityFeed"></div>
+                        
+                        <div class="pagination-wrapper">
+                            <div class="pagination-info" id="pagination-info"></div>
+                            <div class="pagination-controls" id="pagination-controls"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="empty-state" style="display: none;">
+                        <div class="empty-state">
+                            <div class="empty-icon">👥</div>
+                            <h3 class="empty-title">No users found</h3>
+                            <p class="empty-text">Try adjusting your filters or add a new user.</p>
                         </div>
                     </div>
                 </div>
@@ -198,12 +210,6 @@ $user_role = $_SESSION['role'];
     </div>
 
     <script src="/internal_portal/public/js/mobile-menu.js"></script>
-    <script src="/internal_portal/public/js/dashboard.js"></script>
-    
-    <style>
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-    </style>
+    <script src="/internal_portal/public/js/users.js"></script>
 </body>
 </html>

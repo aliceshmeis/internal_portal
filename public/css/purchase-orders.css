@@ -1,0 +1,273 @@
+/* ===========================================
+   PURCHASE ORDERS - PROFESSIONAL DESIGN
+   =========================================== */
+
+/* PO Table */
+.po-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.po-table thead {
+    background: var(--color-bg-secondary);
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.po-table th {
+    padding: 16px 20px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    white-space: nowrap;
+}
+
+.po-table tbody tr {
+    border-bottom: 1px solid var(--color-border-light);
+    transition: all 0.15s;
+}
+
+.po-table tbody tr:hover {
+    background: var(--color-bg-secondary);
+}
+
+.po-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.po-table td {
+    padding: 18px 20px;
+    font-size: 14px;
+    color: var(--color-text-primary);
+    vertical-align: middle;
+}
+
+/* PO ID - Cleaner */
+.po-id {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-primary);
+    background: var(--color-primary-light);
+    padding: 4px 10px;
+    border-radius: 6px;
+    display: inline-block;
+}
+
+/* Vendor Info */
+.vendor-name {
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: 2px;
+}
+
+.vendor-contact {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+}
+
+/* Total Amount */
+.total-amount {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+
+/* PO Status - Professional badges */
+.po-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.po-status::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.status-draft {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+.status-draft::before { background: #9ca3af; }
+
+.status-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+.status-pending::before { background: #f59e0b; }
+
+.status-approved {
+    background: #dbeafe;
+    color: #1e40af;
+}
+.status-approved::before { background: #3b82f6; }
+
+.status-ordered {
+    background: #e0e7ff;
+    color: #4338ca;
+}
+.status-ordered::before { background: #6366f1; }
+
+.status-received {
+    background: #d1fae5;
+    color: #065f46;
+}
+.status-received::before { background: #10b981; }
+
+.status-rejected {
+    background: #fee2e2;
+    color: #991b1b;
+}
+.status-rejected::before { background: #ef4444; }
+
+/* Created By - Cleaner */
+.created-by {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.creator-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.creator-name {
+    font-size: 13px;
+    color: var(--color-text-primary);
+    font-weight: 500;
+}
+
+/* Action Buttons */
+.po-action-btn {
+    padding: 6px 12px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-light);
+    border-radius: 6px;
+    color: var(--color-text-primary);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.po-action-btn:hover {
+    background: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+    transform: translateY(-1px);
+}
+
+.po-action-btn.approve {
+    background: #d1fae5;
+    border-color: #a7f3d0;
+    color: #065f46;
+}
+
+.po-action-btn.approve:hover {
+    background: #10b981;
+    color: white;
+}
+
+.po-action-btn.reject {
+    background: #fee2e2;
+    border-color: #fecaca;
+    color: #991b1b;
+}
+
+.po-action-btn.reject:hover {
+    background: #ef4444;
+    color: white;
+}
+
+/* Date Display */
+.po-date {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+}
+
+/* Stats Summary - Matching Dashboard */
+.stats-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.summary-card {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-light);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    position: relative;
+    transition: all 0.2s;
+}
+
+.summary-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--summary-color);
+    opacity: 0.6;
+}
+
+.summary-card.blue { --summary-color: #3b82f6; }
+.summary-card.yellow { --summary-color: #f59e0b; }
+.summary-card.green { --summary-color: #10b981; }
+.summary-card.purple { --summary-color: #a855f7; }
+
+.summary-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.summary-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--summary-color);
+    margin-bottom: 4px;
+    letter-spacing: -0.5px;
+}
+
+.summary-label {
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .stats-summary {
+        grid-template-columns: 1fr;
+    }
+    
+    .po-table {
+        font-size: 13px;
+    }
+}

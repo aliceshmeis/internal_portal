@@ -1,0 +1,374 @@
+/* ===========================================
+   STOCK LIST PAGE - PROFESSIONAL DESIGN
+   =========================================== */
+
+/* Stock Table */
+.stock-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.stock-table thead {
+    background: var(--color-bg-secondary);
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.stock-table th {
+    padding: 16px 20px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    white-space: nowrap;
+}
+
+.stock-table tbody tr {
+    border-bottom: 1px solid var(--color-border-light);
+    transition: all 0.15s;
+}
+
+.stock-table tbody tr:hover {
+    background: var(--color-bg-secondary);
+}
+
+.stock-table tbody tr.low-stock {
+    background: #fef3c7;
+}
+
+.stock-table tbody tr.low-stock:hover {
+    background: #fde68a;
+}
+
+.stock-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.stock-table td {
+    padding: 18px 20px;
+    font-size: 14px;
+    color: var(--color-text-primary);
+    vertical-align: middle;
+}
+
+/* Stock Item */
+.stock-item-name {
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: 2px;
+}
+
+.stock-sku {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--color-text-secondary);
+}
+
+/* Quantity Display with Progress Bar */
+.quantity-display {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.quantity-number {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    min-width: 40px;
+}
+
+.quantity-progress {
+    flex: 1;
+    height: 6px;
+    background: var(--color-border-light);
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+}
+
+.quantity-progress-bar {
+    height: 100%;
+    background: #10b981;
+    border-radius: 3px;
+    transition: all 0.3s;
+}
+
+.quantity-progress-bar.low {
+    background: #f59e0b;
+}
+
+.quantity-progress-bar.critical {
+    background: #ef4444;
+}
+
+/* Stock Status Badges - Professional */
+.stock-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.stock-status::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.stock-status-ok {
+    background: #d1fae5;
+    color: #065f46;
+}
+.stock-status-ok::before { background: #10b981; }
+
+.stock-status-low {
+    background: #fef3c7;
+    color: #92400e;
+}
+.stock-status-low::before { background: #f59e0b; }
+
+.stock-status-critical {
+    background: #fee2e2;
+    color: #991b1b;
+}
+.stock-status-critical::before { background: #ef4444; }
+
+/* Alert Banner - Cleaner */
+.alert-banner {
+    background: #fef3c7;
+    border: 1px solid #fde68a;
+    border-radius: 12px;
+    padding: 16px 24px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.alert-banner.critical {
+    background: #fee2e2;
+    border-color: #fecaca;
+}
+
+.alert-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.alert-content {
+    flex: 1;
+}
+
+.alert-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin-bottom: 4px;
+}
+
+.alert-text {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+}
+
+.alert-action {
+    padding: 10px 20px;
+    background: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.alert-action:hover {
+    background: var(--color-primary-hover);
+    transform: translateY(-1px);
+}
+
+/* Adjust/Request Buttons */
+.adjust-btn {
+    padding: 6px 12px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-light);
+    border-radius: 6px;
+    color: var(--color-text-primary);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.adjust-btn:hover {
+    background: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+    transform: translateY(-1px);
+}
+
+.request-po-btn {
+    padding: 6px 12px;
+    background: #fef3c7;
+    border: 1px solid #fde68a;
+    border-radius: 6px;
+    color: #92400e;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.request-po-btn:hover {
+    background: #f59e0b;
+    color: white;
+    transform: translateY(-1px);
+}
+
+/* Last Updated */
+.last-updated {
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+}
+
+/* Low Stock Filter Toggle */
+.filter-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-light);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+}
+
+.filter-toggle:hover {
+    background: var(--color-bg-tertiary);
+}
+
+.filter-toggle.active {
+    background: #fef3c7;
+    border-color: #fde68a;
+    color: #92400e;
+}
+
+.filter-toggle input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #f59e0b;
+}
+
+.filter-toggle-label {
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Stats Cards - Matching Dashboard */
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.stat-card {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-light);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--stat-color);
+    opacity: 0.6;
+}
+
+.stat-card.blue { --stat-color: #3b82f6; }
+.stat-card.green { --stat-color: #10b981; }
+.stat-card.yellow { --stat-color: #f59e0b; }
+.stat-card.gray { --stat-color: #6b7280; }
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+    background: var(--color-bg-secondary);
+    color: var(--stat-color);
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    letter-spacing: -0.5px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .quantity-display {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .quantity-progress {
+        width: 100%;
+    }
+    
+    .alert-banner {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .stats-row {
+        grid-template-columns: 1fr;
+    }
+}

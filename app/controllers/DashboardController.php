@@ -175,7 +175,7 @@ class DashboardController {
         
         foreach ($stock_items as $item) {
             $quantity = intval($item['quantity']);
-            $min_threshold = intval($item['min_threshold']);
+            $min_threshold = intval($item['minimum_threshold']);
             
             if ($quantity == 0) {
                 $stats['out_of_stock_count']++;
@@ -215,7 +215,7 @@ class DashboardController {
         
         foreach ($stock_items as $item) {
             $quantity = intval($item['quantity']);
-            $min_threshold = intval($item['min_threshold']);
+            $min_threshold = intval($item['minimum_threshold']);
             
             if ($quantity <= $min_threshold) {
                 $low_stock[] = $item;

@@ -1,0 +1,304 @@
+/* ===========================================
+   PROFESSIONAL ADMIN LAYOUT V2
+   Clean, Modern, Minimal Design
+   =========================================== */
+
+:root {
+    --topbar-height: 64px;
+    --sidebar-width: 260px;
+    --sidebar-collapsed-width: 70px;
+}
+
+/* ===========================================
+   PROFESSIONAL TOPBAR
+   =========================================== */
+
+.topbar {
+    position: fixed;
+    top: 0;
+    left: var(--sidebar-width);
+    right: 0;
+    height: var(--topbar-height);
+    background: var(--color-bg-primary);
+    border-bottom: 1px solid var(--color-border-light);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    z-index: 100;
+    transition: left 0.3s ease;
+}
+
+.sidebar.collapsed ~ .main-content .topbar {
+    left: var(--sidebar-collapsed-width);
+}
+
+.topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.hamburger-menu {
+    display: none;
+    width: 40px;
+    height: 40px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    padding: 0;
+    color: var(--color-text-secondary);
+    transition: color 0.2s;
+}
+
+.hamburger-menu:hover {
+    color: var(--color-text-primary);
+}
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--color-text-secondary);
+}
+
+.breadcrumb-item {
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.breadcrumb-item:hover {
+    color: var(--color-primary);
+}
+
+.breadcrumb-item.active {
+    color: var(--color-text-primary);
+    font-weight: 500;
+}
+
+.breadcrumb-separator {
+    color: var(--color-text-tertiary);
+}
+
+.topbar-search {
+    position: relative;
+    width: 400px;
+}
+
+.topbar-search input {
+    width: 100%;
+    padding: 10px 16px 10px 40px;
+    border: 1px solid var(--color-border-light);
+    border-radius: 8px;
+    font-size: 14px;
+    background: var(--color-bg-secondary);
+    transition: all 0.2s;
+}
+
+.topbar-search input:focus {
+    outline: none;
+    border-color: var(--color-border-medium);
+    background: var(--color-bg-primary);
+}
+
+.topbar-search::before {
+    content: '⌕';
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 16px;
+    color: var(--color-text-tertiary);
+}
+
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.topbar-icon-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--color-text-secondary);
+    transition: all 0.2s;
+    position: relative;
+}
+
+.topbar-icon-btn:hover {
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+}
+
+.topbar-icon-btn .badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 16px;
+    height: 16px;
+    background: var(--color-danger);
+    color: white;
+    border-radius: 50%;
+    font-size: 9px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ===========================================
+   MAIN CONTENT WITH TOPBAR
+   =========================================== */
+
+.main-content {
+    margin-top: var(--topbar-height);
+}
+
+/* ===========================================
+   PROFESSIONAL SIDEBAR - Clean Icons
+   =========================================== */
+
+.sidebar-nav-icon {
+    width: 20px;
+    height: 20px;
+    display: inline-block;
+    position: relative;
+    font-style: normal;
+    text-align: center;
+    line-height: 20px;
+}
+
+/* Icon replacements - Simple, clean, professional */
+.sidebar-nav-icon.icon-dashboard::before { content: '▦'; font-size: 18px; }
+.sidebar-nav-icon.icon-tickets::before { content: '◫'; font-size: 18px; }
+.sidebar-nav-icon.icon-assets::before { content: '⊞'; font-size: 18px; }
+.sidebar-nav-icon.icon-stock::before { content: '▤'; font-size: 18px; }
+.sidebar-nav-icon.icon-po::before { content: '▥'; font-size: 18px; }
+.sidebar-nav-icon.icon-users::before { content: '◉'; font-size: 18px; }
+.sidebar-nav-icon.icon-reports::before { content: '▭'; font-size: 18px; }
+.sidebar-nav-icon.icon-logout::before { content: '⎋'; font-size: 18px; }
+
+/* Better sidebar nav styling */
+.sidebar-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    border-radius: 8px;
+    margin: 2px 8px;
+    transition: all 0.2s;
+    font-size: 14px;
+    font-weight: 500;
+    position: relative;
+}
+
+.sidebar-nav-item:hover {
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+}
+
+.sidebar-nav-item.active {
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+}
+
+.sidebar-nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 20px;
+    background: var(--color-primary);
+    border-radius: 0 2px 2px 0;
+}
+
+.sidebar-nav-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 16px 16px 8px 16px;
+    margin-top: 8px;
+}
+
+.sidebar-nav-section:first-child .sidebar-nav-section-title {
+    margin-top: 0;
+}
+
+/* ===========================================
+   MOBILE RESPONSIVE
+   =========================================== */
+
+@media (max-width: 1024px) {
+    .hamburger-menu {
+        display: block;
+    }
+    
+    .sidebar {
+        transform: translateX(-100%);
+        box-shadow: none;
+    }
+    
+    .sidebar.mobile-open {
+        transform: translateX(0);
+        box-shadow: 4px 0 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .topbar {
+        left: 0;
+    }
+    
+    .main-content {
+        margin-left: 0;
+    }
+    
+    .topbar-search {
+        display: none;
+    }
+    
+    .mobile-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 90;
+    }
+    
+    .mobile-overlay.active {
+        display: block;
+    }
+}
+
+@media (max-width: 768px) {
+    .topbar {
+        padding: 0 16px;
+    }
+    
+    .topbar-right {
+        gap: 8px;
+    }
+    
+    .breadcrumb {
+        display: none;
+    }
+    
+    .header-user-info {
+        display: none;
+    }
+}

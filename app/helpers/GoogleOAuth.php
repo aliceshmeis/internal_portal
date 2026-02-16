@@ -8,16 +8,17 @@ class GoogleOAuth {
     /**
      * Get Google login URL
      */
+    //this class is the translator between my system and google
     public static function getLoginUrl() {
         $params = [
-            'client_id' => GOOGLE_CLIENT_ID,
-            'redirect_uri' => GOOGLE_REDIRECT_URI,
-            'response_type' => 'code',
-            'scope' => GOOGLE_SCOPE,
+            'client_id' => GOOGLE_CLIENT_ID,//identifies your app to google 
+            'redirect_uri' => GOOGLE_REDIRECT_URI,//where Google should send the user back after login
+            'response_type' => 'code',//“After login, give me a temporary authorization code.”
+            'scope' => GOOGLE_SCOPE,//what information you want (email, profile)
             'access_type' => 'online',
         ];
         
-        return GOOGLE_AUTH_URL . '?' . http_build_query($params);
+        return GOOGLE_AUTH_URL . '?' . http_build_query($params);//builds a full url so when user clicks continue with google it redirect them to this url
     }
     
     /**
@@ -30,12 +31,12 @@ class GoogleOAuth {
             'client_secret' => GOOGLE_CLIENT_SECRET,
             'redirect_uri' => GOOGLE_REDIRECT_URI,
             'grant_type' => 'authorization_code',
-        ];
+        ];// this tells google hers the code you give me please give me an acces token 
         
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, GOOGLE_TOKEN_URL);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
+        curl_setopt($ch, CURLOPT_URL, GOOGLE_TOKEN_URL);//Open connection to Google token endpoint
+        curl_setopt($ch, CURLOPT_POST, true);//Send POST request
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));//Send parameters
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         
