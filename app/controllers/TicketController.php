@@ -2,12 +2,12 @@
 require_once __DIR__ . '/../../core/Auth.php';
 require_once __DIR__ . '/../../core/Response.php';
 require_once __DIR__ . '/../../core/Request.php';
-require_once __DIR__ . '/../Models/Ticket.php';
+require_once __DIR__ . '/../models/Ticket.php';
 
 class TicketController {
     
     /**
-     * Create a new ticket
+     * Create a new ticket - UPDATED to support assigned_to for Admins
      */
     public function create() {
         // Auth check
@@ -49,6 +49,22 @@ class TicketController {
         $allowed_priorities = ['Low', 'Medium', 'High', 'Critical'];
         if (!in_array($data['priority'], $allowed_priorities)) {
             return Response::error('Invalid priority. Allowed: ' . implode(', ', $allowed_priorities), 400);
+        }
+        
+        // ========================================
+        // Handle assigned_to field (Admin only)
+        // ========================================
+        if (isset($input['assigned_to'])) {
+            if (!Auth::isAdmin()) {
+                return Response::forbidden('Only Admins can assign tickets during creation');
+            }
+            
+            // Validate assigned_to is a number
+            if (!is_numeric($input['assigned_to'])) {
+                return Response::error('assigned_to must be a valid user ID (number)', 400);
+            }
+            
+            $data['assigned_to'] = intval($input['assigned_to']);
         }
         
         // Create ticket
@@ -120,16 +136,19 @@ class TicketController {
             return Response::notFound('Ticket not found');
         }
         
-        // Permission check - Staff can only see their campus
-        if (!Auth::isAdmin() && $ticket['campus_id'] != Auth::campusId()) {
-            return Response::forbidden('You do not have permission to view this ticket');
+        // SECURITY: Permission check
+        if (!Auth::isAdmin()) {
+            // Staff can only view tickets in their campus
+            if ($ticket['campus_id'] != Auth::campusId()) {
+                return Response::forbidden('You do not have permission to view this ticket');
+            }
         }
         
         return Response::success('Ticket retrieved successfully', $ticket);
     }
     
     /**
-     * Update ticket
+     * Update ticket - FIXED SECURITY
      */
     public function update() {
         // Auth check
@@ -159,9 +178,35 @@ class TicketController {
             return Response::notFound('Ticket not found');
         }
         
-        // Permission check
-        if (!Auth::isAdmin() && $ticket['campus_id'] != Auth::campusId()) {
-            return Response::forbidden('You do not have permission to update this ticket');
+        // ========================================
+        // SECURITY: Different rules for Admin vs Staff
+        // ========================================
+        if (!Auth::isAdmin()) {
+            $isCreator = ($ticket['created_by'] == Auth::userId());
+            $isAssigned = ($ticket['assigned_to'] == Auth::userId());
+            
+            // Staff can only update if they created it OR are assigned to it
+            if (!$isCreator && !$isAssigned) {
+                return Response::forbidden('You can only update tickets you created or are assigned to');
+            }
+            
+            // Extra security: Check campus too
+            if ($ticket['campus_id'] != Auth::campusId()) {
+                return Response::forbidden('You do not have permission to update this ticket');
+            }
+            
+            // Staff cannot change status to Resolved or Closed via update
+            if (isset($input['status']) && in_array($input['status'], ['Resolved', 'Closed'])) {
+                return Response::forbidden('Staff cannot mark tickets as Resolved or Closed via update. Please use the resolve/close endpoints.');
+            }
+            
+            // Staff cannot assign tickets (only Admin)
+            if (isset($input['assigned_to'])) {
+                return Response::forbidden('Staff cannot assign tickets. Only Admins can assign tickets.');
+            }
+            
+            // For staff: Recommend using the staff-update endpoint instead
+            // This endpoint is mainly for Admins
         }
         
         // Build update data
@@ -191,7 +236,8 @@ class TicketController {
             $updateData['priority'] = $input['priority'];
         }
         
-        if (isset($input['assigned_to'])) {
+        // Only Admin can assign
+        if (isset($input['assigned_to']) && Auth::isAdmin()) {
             $updateData['assigned_to'] = $input['assigned_to'] ? intval($input['assigned_to']) : null;
         }
         
@@ -207,6 +253,86 @@ class TicketController {
         } else {
             return Response::serverError('Failed to update ticket');
         }
+    }
+    
+    /**
+     * Staff Update - Simplified endpoint for staff
+     * Staff can only add comments, status automatically becomes Pending
+     */
+    public function staffUpdate() {
+        // Auth check
+        if (!Auth::check()) {
+            return Response::unauthorized();
+        }
+        
+        // Only Staff can use this (Admin should use full update)
+        if (Auth::isAdmin()) {
+            return Response::error('Admins should use the regular update endpoint', 400);
+        }
+        
+        // Method check
+        if (!Request::isPost() && !Request::isPut()) {
+            return Response::methodNotAllowed('POST, PUT');
+        }
+        
+        // Get input
+        $input = Request::json();
+        
+        // Validate
+        if (empty($input['ticket_id'])) {
+            return Response::error('Ticket ID is required', 400);
+        }
+        
+        if (empty($input['comment'])) {
+            return Response::error('Comment is required', 400);
+        }
+        
+        $ticket_id = intval($input['ticket_id']);
+        $comment = trim($input['comment']);
+        
+        // Get ticket
+        $ticket = Ticket::find($ticket_id);
+        
+        if (!$ticket) {
+            return Response::notFound('Ticket not found');
+        }
+        
+        // SECURITY: Staff can only update tickets they're assigned to OR created
+        $isCreator = ($ticket['created_by'] == Auth::userId());
+        $isAssigned = ($ticket['assigned_to'] == Auth::userId());
+        
+        if (!$isCreator && !$isAssigned) {
+            return Response::forbidden('You can only update tickets you created or are assigned to');
+        }
+        
+        // Check campus
+        if ($ticket['campus_id'] != Auth::campusId()) {
+            return Response::forbidden('You do not have permission to update this ticket');
+        }
+        
+        // Can't update closed tickets
+        if ($ticket['status'] === 'Closed') {
+            return Response::error('Cannot update closed tickets', 400);
+        }
+        
+        // Add comment
+        $new_comment = Ticket::addComment($ticket_id, Auth::userId(), $comment);
+        
+        if (!$new_comment) {
+            return Response::serverError('Failed to add comment');
+        }
+        
+        // Update status to Pending (automatic for staff updates)
+        $updated_ticket = Ticket::update($ticket_id, ['status' => 'Pending']);
+        
+        if (!$updated_ticket) {
+            return Response::serverError('Failed to update ticket status');
+        }
+        
+        return Response::success('Ticket updated and comment added successfully', [
+            'ticket' => $updated_ticket,
+            'comment' => $new_comment
+        ], 200);
     }
     
     /**
@@ -239,9 +365,9 @@ class TicketController {
             return Response::notFound('Ticket not found');
         }
         
-        // Permission check
-        if (!Auth::isAdmin() && $ticket['campus_id'] != Auth::campusId()) {
-            return Response::forbidden('You do not have permission to close this ticket');
+        // SECURITY: Only Admin can close tickets
+        if (!Auth::isAdmin()) {
+            return Response::forbidden('Only Admins can close tickets');
         }
         
         // Check if already closed
@@ -268,7 +394,7 @@ class TicketController {
             return Response::unauthorized();
         }
         
-        // Permission check
+        // Permission check - Only Admin and Staff
         if (!Auth::hasRole(['Admin', 'Staff'])) {
             return Response::forbidden('Only Admin and Staff can assign tickets');
         }
@@ -351,7 +477,7 @@ class TicketController {
             return Response::notFound('Ticket not found');
         }
         
-        // Permission check - Only assigned user or Admin
+        // SECURITY: Only assigned user or Admin can resolve
         if (!Auth::isAdmin() && $ticket['assigned_to'] != Auth::userId()) {
             return Response::forbidden('Only the assigned user or Admin can resolve this ticket');
         }

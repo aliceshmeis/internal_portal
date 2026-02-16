@@ -1,7 +1,12 @@
 openapi: 3.0.0
 info:
-  title: Internal Portal API
-  description: Ticketing & Assets Management System API Documentation
+  title: Internal Portal API - Complete Documentation
+  description: |
+    Complete API documentation for the Internal Portal Ticketing & Assets Management System.
+    
+    **Authentication:** All endpoints require session-based authentication via PHPSESSID cookie.
+    
+    **Base URL:** http://localhost/internal_portal/api/v1
   version: 1.0.0
   contact:
     name: Alice Shmeis
@@ -12,14 +17,18 @@ servers:
     description: Local development server
 
 tags:
+  - name: Dashboard
+    description: Dashboard statistics and analytics
   - name: Tickets
-    description: Ticket management endpoints
+    description: Ticket management and tracking
   - name: Assets
-    description: Asset management endpoints
+    description: Asset inventory management
   - name: Stock
-    description: Stock management endpoints
+    description: Stock inventory and tracking
   - name: Purchase Orders
-    description: Purchase order management endpoints
+    description: Purchase order workflow management
+  - name: Users
+    description: User management (Admin only)
 
 components:
   securitySchemes:
@@ -27,9 +36,23 @@ components:
       type: apiKey
       in: cookie
       name: PHPSESSID
+      description: Session-based authentication cookie
       
   schemas:
-    Error:
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Operation successful
+        data:
+          type: object
+          description: Response data (varies by endpoint)
+        
+    ErrorResponse:
       type: object
       properties:
         success:
@@ -47,15 +70,145 @@ security:
   - CookieAuth: []
 
 paths:
-  # ==========================================
+  # ===========================================
+  # DASHBOARD ENDPOINTS
+  # ===========================================
+  /dashboard/stats.php:
+    get:
+      tags:
+        - Dashboard
+      summary: Get admin dashboard statistics
+      description: |
+        Returns comprehensive system statistics including:
+        - Ticket counts by status and priority
+        - Asset counts by status and category
+        - Purchase order statistics and amounts
+        - Stock alerts and low stock items
+        
+        **Permissions:** Admin sees all data, Staff sees campus-specific data
+      responses:
+        '200':
+          description: Dashboard stats retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      tickets:
+                        type: object
+                        properties:
+                          total:
+                            type: integer
+                          by_status:
+                            type: object
+                            properties:
+                              Open:
+                                type: integer
+                              In Progress:
+                                type: integer
+                              Pending:
+                                type: integer
+                              Resolved:
+                                type: integer
+                              Closed:
+                                type: integer
+                          by_priority:
+                            type: object
+                      assets:
+                        type: object
+                        properties:
+                          total:
+                            type: integer
+                          by_status:
+                            type: object
+                          by_category:
+                            type: object
+                      purchase_orders:
+                        type: object
+                      stock:
+                        type: object
+                      recent_tickets:
+                        type: array
+                        items:
+                          type: object
+                      low_stock_items:
+                        type: array
+                        items:
+                          type: object
+        '401':
+          description: Unauthorized
+        '405':
+          description: Method not allowed
+
+  /staff/dashboard.php:
+    get:
+      tags:
+        - Dashboard
+      summary: Get staff dashboard statistics
+      description: |
+        Returns personal statistics for the logged-in staff member:
+        - Personal ticket counts (open, in progress, resolved this month)
+        - Assigned assets count
+        - My recent tickets (max 5)
+        - My assigned assets (max 5)
+      responses:
+        '200':
+          description: Staff dashboard data retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      tickets:
+                        type: object
+                        properties:
+                          open:
+                            type: integer
+                          in_progress:
+                            type: integer
+                          resolved_month:
+                            type: integer
+                      assets:
+                        type: object
+                        properties:
+                          count:
+                            type: integer
+                      my_tickets:
+                        type: array
+                        maxItems: 5
+                      my_assets:
+                        type: array
+                        maxItems: 5
+
+  # ===========================================
   # TICKETS ENDPOINTS
-  # ==========================================
+  # ===========================================
   /tickets/create.php:
     post:
       tags:
         - Tickets
       summary: Create a new ticket
-      description: Creates a new ticket in the system
+      description: |
+        Create a new support ticket in the system.
+        
+        **Permissions:**
+        - All authenticated users can create tickets
+        - Tickets are created in the user's campus
+        - Only **Admins** can assign tickets during creation using the `assigned_to` field
+        - Staff creating tickets: ticket starts as "Open" and unassigned
       requestBody:
         required: true
         content:
@@ -68,72 +221,94 @@ paths:
               properties:
                 title:
                   type: string
-                  example: Broken printer in office
+                  description: Ticket title/subject
+                  example: Printer not working on 2nd floor
                 description:
                   type: string
-                  example: The printer on the 2nd floor is not working
+                  description: Detailed description of the issue
+                  example: The HP printer in the main office is showing paper jam error
                 priority:
                   type: string
                   enum: [Low, Medium, High, Critical]
-                  example: High
+                  default: Medium
+                  description: Ticket priority level
+                  example: Medium
+                assigned_to:
+                  type: integer
+                  description: |
+                    **Admin only**: User ID to assign the ticket to (must be integer, not string).
+                    Only Admins can use this field during creation. Staff cannot assign during creation.
+                  example: 3
       responses:
         '201':
           description: Ticket created successfully
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                    example: Ticket created successfully
-                  data:
-                    type: object
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
                     properties:
-                      ticket_id:
-                        type: integer
-                        example: 1
-                      ticket_number:
-                        type: string
-                        example: TKT-20260213-ABC123
-                      title:
-                        type: string
-                      status:
-                        type: string
-                        example: Open
-                      priority:
-                        type: string
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 6
+                          ticket_number:
+                            type: string
+                            example: TKT-20260216-ABC123
+                          title:
+                            type: string
+                          description:
+                            type: string
+                          status:
+                            type: string
+                            example: Open
+                          priority:
+                            type: string
+                          campus_id:
+                            type: integer
+                          created_by:
+                            type: integer
+                          assigned_to:
+                            type: integer
+                            nullable: true
+                            example: 3
+                          created_at:
+                            type: string
+                            format: date-time
         '400':
           description: Validation failed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
           description: Unauthorized
-          
+        '403':
+          description: Forbidden (Staff trying to assign tickets)
+
   /tickets/list.php:
     get:
       tags:
         - Tickets
       summary: List all tickets
-      description: Get all tickets (filtered by role and campus)
+      description: |
+        Get all tickets based on user role and optional filters.
+        - Admin sees all tickets across all campuses
+        - Staff sees only campus-specific tickets
       parameters:
         - name: status
           in: query
           schema:
             type: string
             enum: [Open, In Progress, Pending, Resolved, Closed]
-          description: Filter by ticket status
         - name: priority
           in: query
           schema:
             type: string
             enum: [Low, Medium, High, Critical]
-          description: Filter by ticket priority
       responses:
         '200':
           description: Tickets retrieved successfully
@@ -144,7 +319,6 @@ paths:
                 properties:
                   success:
                     type: boolean
-                    example: true
                   message:
                     type: string
                   count:
@@ -153,22 +327,21 @@ paths:
                     type: array
                     items:
                       type: object
-                      
+
   /tickets/show.php:
     get:
       tags:
         - Tickets
-      summary: Get single ticket
+      summary: Get single ticket details
       parameters:
         - name: id
           in: query
           required: true
           schema:
             type: integer
-          description: Ticket ID
       responses:
         '200':
-          description: Ticket retrieved successfully
+          description: Ticket retrieved
         '404':
           description: Ticket not found
 
@@ -176,7 +349,14 @@ paths:
     put:
       tags:
         - Tickets
-      summary: Update ticket
+      summary: Update ticket (Admin/Staff - Full Control)
+      description: |
+        Update ticket details. 
+        
+        **Admin:** Can update any field including status, assigned_to
+        **Staff:** Can update title, description, priority (limited)
+        
+        **Note:** Staff should use `/tickets/staff-update.php` for simple comment-based updates.
       requestBody:
         required: true
         content:
@@ -188,24 +368,173 @@ paths:
               properties:
                 id:
                   type: integer
-                  example: 1
+                  example: 12
                 title:
                   type: string
+                  example: Updated printer issue
                 description:
                   type: string
+                  example: Updated description
                 status:
                   type: string
                   enum: [Open, In Progress, Pending, Resolved, Closed]
+                  description: Admin can set any status, Staff cannot set Resolved/Closed
                 priority:
                   type: string
                   enum: [Low, Medium, High, Critical]
                 assigned_to:
                   type: integer
-                  nullable: true
+                  description: Admin only - cannot be changed by Staff
+                  example: 7
       responses:
         '200':
           description: Ticket updated successfully
-          
+        '400':
+          description: Validation error
+        '403':
+          description: Forbidden (Staff trying to do admin actions)
+
+  /tickets/staff-update.php:
+    post:
+      tags:
+        - Tickets
+      summary: Staff Update Ticket (Simple - Comment Only)
+      description: |
+        **Staff-only endpoint** for simple ticket updates.
+        
+        **What it does:**
+        - Adds comment to ticket_comments table
+        - Automatically sets status to "Pending"
+        - Updates ticket timestamp
+        
+        **Who can use:**
+        - Staff assigned to the ticket
+        - Staff who created the ticket
+        
+        **Simple workflow:**
+        Staff just needs to provide ticket_id and comment - everything else is automatic!
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - ticket_id
+                - comment
+              properties:
+                ticket_id:
+                  type: integer
+                  description: ID of the ticket to update
+                  example: 12
+                comment:
+                  type: string
+                  description: Comment/update from staff (saved to ticket_comments table)
+                  example: Waiting for replacement parts to arrive from supplier
+      responses:
+        '200':
+          description: Ticket updated and comment added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Ticket updated and comment added successfully
+                  data:
+                    type: object
+                    properties:
+                      ticket:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 12
+                          status:
+                            type: string
+                            example: Pending
+                          updated_at:
+                            type: string
+                            example: 2026-02-16 12:00:00
+                      comment:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 5
+                          ticket_id:
+                            type: integer
+                            example: 12
+                          user_id:
+                            type: integer
+                            example: 9
+                          comment:
+                            type: string
+                            example: Waiting for replacement parts to arrive from supplier
+                          user_name:
+                            type: string
+                            example: David Kim
+                          created_at:
+                            type: string
+                            example: 2026-02-16 12:00:00
+        '400':
+          description: Validation error (missing ticket_id or comment)
+        '403':
+          description: Forbidden (not assigned to ticket or wrong campus)
+        '404':
+          description: Ticket not found
+
+
+  /tickets/assign.php:
+    post:
+      tags:
+        - Tickets
+      summary: Assign ticket to user
+      description: Assign a ticket to a staff member (Admin or Staff)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - ticket_id
+                - assigned_to
+              properties:
+                ticket_id:
+                  type: integer
+                assigned_to:
+                  type: integer
+      responses:
+        '200':
+          description: Ticket assigned
+
+  /tickets/resolve.php:
+    post:
+      tags:
+        - Tickets
+      summary: Mark ticket as resolved
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  type: integer
+                resolution_notes:
+                  type: string
+      responses:
+        '200':
+          description: Ticket resolved
+
   /tickets/close.php:
     post:
       tags:
@@ -222,19 +551,57 @@ paths:
               properties:
                 id:
                   type: integer
-                  example: 1
       responses:
         '200':
-          description: Ticket closed successfully
+          description: Ticket closed
 
-  # ==========================================
+  /tickets/comments/create.php:
+    post:
+      tags:
+        - Tickets
+      summary: Add comment to ticket
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - ticket_id
+                - comment
+              properties:
+                ticket_id:
+                  type: integer
+                comment:
+                  type: string
+      responses:
+        '201':
+          description: Comment added
+
+  /tickets/comments/list.php:
+    get:
+      tags:
+        - Tickets
+      summary: Get ticket comments
+      parameters:
+        - name: ticket_id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Comments retrieved
+
+  # ===========================================
   # ASSETS ENDPOINTS
-  # ==========================================
+  # ===========================================
   /assets/create.php:
     post:
       tags:
         - Assets
       summary: Create a new asset
+      description: Create a new asset (Admin or Asset Manager only)
       requestBody:
         required: true
         content:
@@ -251,26 +618,26 @@ paths:
                 category:
                   type: string
                   enum: [Laptop, Printer, Network Equipment, Furniture, Other]
-                  example: Laptop
                 description:
                   type: string
                 serial_number:
                   type: string
-                  example: DLL-XPS-2024-001
+                status:
+                  type: string
+                  enum: [Available, In Use, Maintenance, Retired]
+                  default: Available
                 purchase_date:
                   type: string
                   format: date
-                  example: "2024-01-15"
                 purchase_cost:
                   type: number
-                  example: 1500.00
                 warranty_expiry:
                   type: string
                   format: date
       responses:
         '201':
-          description: Asset created successfully
-          
+          description: Asset created
+
   /assets/list.php:
     get:
       tags:
@@ -281,16 +648,14 @@ paths:
           in: query
           schema:
             type: string
-            enum: [Laptop, Printer, Network Equipment, Furniture, Other]
         - name: status
           in: query
           schema:
             type: string
-            enum: [Available, In Use, Maintenance, Retired]
       responses:
         '200':
-          description: Assets retrieved successfully
-          
+          description: Assets retrieved
+
   /assets/show.php:
     get:
       tags:
@@ -304,11 +669,60 @@ paths:
             type: integer
       responses:
         '200':
-          description: Asset retrieved successfully
+          description: Asset retrieved
 
-  # ==========================================
+  /assets/update.php:
+    put:
+      tags:
+        - Assets
+      summary: Update asset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  type: integer
+                name:
+                  type: string
+                description:
+                  type: string
+                status:
+                  type: string
+                assigned_to:
+                  type: integer
+      responses:
+        '200':
+          description: Asset updated
+
+  /assets/delete.php:
+    delete:
+      tags:
+        - Assets
+      summary: Delete/retire asset (Admin only)
+      description: Soft delete - marks asset as Retired
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  type: integer
+      responses:
+        '200':
+          description: Asset retired
+
+  # ===========================================
   # STOCK ENDPOINTS
-  # ==========================================
+  # ===========================================
   /stock/create.php:
     post:
       tags:
@@ -326,29 +740,28 @@ paths:
               properties:
                 item_name:
                   type: string
-                  example: A4 Paper
                 category:
                   type: string
-                  example: Office Supplies
                 quantity:
                   type: integer
-                  example: 50
                 unit:
                   type: string
-                  example: boxes
+                  default: units
                 minimum_threshold:
                   type: integer
-                  example: 20
+                  default: 10
       responses:
         '201':
-          description: Stock item created successfully
-          
+          description: Stock item created
+
   /stock/list.php:
     get:
       tags:
         - Stock
       summary: List all stock items
-      description: Get all stock items with low stock alerts
+      description: |
+        Get all stock items with automatic low stock alerts.
+        Returns `is_low_stock` flag for items at or below minimum threshold.
       parameters:
         - name: category
           in: query
@@ -361,7 +774,7 @@ paths:
           description: Filter only low stock items
       responses:
         '200':
-          description: Stock items retrieved successfully
+          description: Stock items retrieved
           content:
             application/json:
               schema:
@@ -369,8 +782,6 @@ paths:
                 properties:
                   success:
                     type: boolean
-                  message:
-                    type: string
                   count:
                     type: integer
                   low_stock_count:
@@ -380,17 +791,77 @@ paths:
                     nullable: true
                   data:
                     type: array
-                    items:
-                      type: object
 
-  # ==========================================
+  /stock/show.php:
+    get:
+      tags:
+        - Stock
+      summary: Get single stock item
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Stock item retrieved
+
+  /stock/update.php:
+    put:
+      tags:
+        - Stock
+      summary: Update stock item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  type: integer
+                item_name:
+                  type: string
+                quantity:
+                  type: integer
+                minimum_threshold:
+                  type: integer
+      responses:
+        '200':
+          description: Stock updated
+
+  /stock/delete.php:
+    delete:
+      tags:
+        - Stock
+      summary: Delete stock item (Admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  type: integer
+      responses:
+        '200':
+          description: Stock item deleted
+
+  # ===========================================
   # PURCHASE ORDERS ENDPOINTS
-  # ==========================================
+  # ===========================================
   /purchase-orders/create.php:
     post:
       tags:
         - Purchase Orders
       summary: Create purchase order
+      description: Create a new purchase order with items (Admin or Asset Manager)
       requestBody:
         required: true
         content:
@@ -403,34 +874,68 @@ paths:
               properties:
                 supplier:
                   type: string
-                  example: Tech Supplies Inc
                 notes:
                   type: string
                 items:
                   type: array
                   items:
                     type: object
+                    required:
+                      - item_name
+                      - quantity
+                      - unit_price
                     properties:
                       item_name:
                         type: string
-                        example: Laptop Dell XPS 15
                       quantity:
                         type: integer
-                        example: 5
                       unit_price:
                         type: number
-                        example: 1200.00
                       notes:
                         type: string
       responses:
         '201':
-          description: Purchase order created successfully
-          
-  /purchase-orders/submit.php:
-    post:
+          description: PO created successfully
+
+  /purchase-orders/list.php:
+    get:
       tags:
         - Purchase Orders
-      summary: Submit PO for approval
+      summary: List all purchase orders
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: approval_status
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: POs retrieved
+
+  /purchase-orders/show.php:
+    get:
+      tags:
+        - Purchase Orders
+      summary: Get single PO with items
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: PO retrieved with items
+
+  /purchase-orders/update.php:
+    put:
+      tags:
+        - Purchase Orders
+      summary: Update purchase order
+      description: Can only update Draft or Pending POs
       requestBody:
         required: true
         content:
@@ -442,11 +947,37 @@ paths:
               properties:
                 id:
                   type: integer
-                  example: 1
+                supplier:
+                  type: string
+                status:
+                  type: string
+                notes:
+                  type: string
       responses:
         '200':
-          description: PO submitted successfully
-          
+          description: PO updated
+
+  /purchase-orders/submit.php:
+    post:
+      tags:
+        - Purchase Orders
+      summary: Submit PO for approval
+      description: Change status from Draft to Pending Approval
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  type: integer
+      responses:
+        '200':
+          description: PO submitted
+
   /purchase-orders/approve.php:
     post:
       tags:
@@ -464,23 +995,26 @@ paths:
               properties:
                 id:
                   type: integer
-                  example: 1
                 action:
                   type: string
                   enum: [approve, reject]
-                  example: approve
                 reason:
                   type: string
                   description: Required when rejecting
       responses:
         '200':
-          description: PO approved/rejected successfully
-          
+          description: PO approved/rejected
+
   /purchase-orders/receive.php:
     post:
       tags:
         - Purchase Orders
       summary: Mark PO as received (auto-updates stock)
+      description: |
+        Mark PO as received and automatically update stock quantities.
+        - Updates existing stock items
+        - Creates new stock items if they don't exist
+        - Returns stock update summary
       requestBody:
         required: true
         content:
@@ -492,9 +1026,99 @@ paths:
               properties:
                 id:
                   type: integer
-                  example: 1
                 notes:
                   type: string
       responses:
         '200':
-          description: PO received and stock updated successfully
+          description: PO received and stock updated
+
+  /purchase-orders/cancel.php:
+    post:
+      tags:
+        - Purchase Orders
+      summary: Cancel purchase order
+      description: Cancel a Draft or Pending Approval PO
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  type: integer
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: PO cancelled
+
+  /purchase-orders/delete.php:
+    delete:
+      tags:
+        - Purchase Orders
+      summary: Delete purchase order (Admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  type: integer
+      responses:
+        '200':
+          description: PO deleted
+
+  # ===========================================
+  # USERS ENDPOINTS (Admin only)
+  # ===========================================
+  /users/list.php:
+    get:
+      tags:
+        - Users
+      summary: List all users (Admin only)
+      description: Get all system users with campus information
+      responses:
+        '200':
+          description: Users retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  count:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        name:
+                          type: string
+                        email:
+                          type: string
+                        role:
+                          type: string
+                        campus_name:
+                          type: string
+                        is_active:
+                          type: integer
+                        last_login:
+                          type: string
+                          format: date-time
+                        login_method:
+                          type: string
+        '403':
+          description: Forbidden - Admin only

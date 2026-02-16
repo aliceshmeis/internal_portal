@@ -4,7 +4,7 @@ require_once __DIR__ . '/../../config/database.php';
 class Ticket {
     
     /**
-     * Create a new ticket
+     * Create a new ticket - FIXED to support assigned_to
      * 
      * @param array $data
      * @return array|false
@@ -18,9 +18,9 @@ class Ticket {
             $ticket_number = 'TKT-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -6));
             
             $query = "INSERT INTO tickets 
-                      (ticket_number, campus_id, title, description, status, priority, created_by, created_at) 
+                      (ticket_number, campus_id, title, description, status, priority, created_by, assigned_to, created_at) 
                       VALUES 
-                      (:ticket_number, :campus_id, :title, :description, 'Open', :priority, :created_by, NOW())";
+                      (:ticket_number, :campus_id, :title, :description, 'Open', :priority, :created_by, :assigned_to, NOW())";
             
             $stmt = $db->prepare($query);
             $stmt->bindParam(':ticket_number', $ticket_number);
@@ -29,6 +29,10 @@ class Ticket {
             $stmt->bindParam(':description', $data['description']);
             $stmt->bindParam(':priority', $data['priority']);
             $stmt->bindParam(':created_by', $data['created_by']);
+            
+            // Handle assigned_to (can be null)
+            $assigned_to = $data['assigned_to'] ?? null;
+            $stmt->bindParam(':assigned_to', $assigned_to, PDO::PARAM_INT);
             
             if ($stmt->execute()) {
                 return self::find($db->lastInsertId());

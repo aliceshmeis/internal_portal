@@ -1,0 +1,406 @@
+/* Admin Ticket Details Page Styles */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f5f7fa;
+    color: #2d3748;
+}
+
+/* Topbar */
+.topbar {
+    background: white;
+    height: 64px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 32px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+}
+
+.topbar-left h1 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1a202c;
+}
+
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.user-name {
+    font-weight: 500;
+    color: #2d3748;
+}
+
+.user-role {
+    padding: 4px 12px;
+    background: #edf2f7;
+    border-radius: 12px;
+    font-size: 13px;
+    color: #4a5568;
+}
+
+.btn-logout {
+    padding: 8px 16px;
+    background: #f7fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #4a5568;
+}
+
+.btn-logout:hover {
+    background: #edf2f7;
+}
+
+/* Main Container */
+.main-container {
+    display: flex;
+    margin-top: 64px;
+    min-height: calc(100vh - 64px);
+}
+
+/* Sidebar */
+.sidebar {
+    width: 240px;
+    background: white;
+    border-right: 1px solid #e2e8f0;
+    padding: 24px 0;
+    position: fixed;
+    left: 0;
+    top: 64px;
+    bottom: 0;
+    overflow-y: auto;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 24px;
+    color: #4a5568;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.nav-item:hover {
+    background: #f7fafc;
+    color: #2d3748;
+}
+
+.nav-item.active {
+    background: #edf2f7;
+    color: #2b6cb0;
+    border-right: 3px solid #3182ce;
+}
+
+.nav-item .icon {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+}
+
+/* Content Area */
+.content {
+    margin-left: 240px;
+    padding: 32px;
+    flex: 1;
+}
+
+/* Back Navigation */
+.back-nav {
+    margin-bottom: 24px;
+}
+
+.btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    color: #4a5568;
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.btn-back:hover {
+    background: #f7fafc;
+    border-color: #cbd5e0;
+}
+
+.btn-back svg {
+    fill: currentColor;
+}
+
+/* Ticket Container */
+.ticket-container {
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    padding: 32px;
+}
+
+.loading {
+    text-align: center;
+    padding: 48px;
+    color: #a0aec0;
+}
+
+/* Ticket Header */
+.ticket-header {
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 24px;
+    margin-bottom: 32px;
+}
+
+.ticket-number {
+    font-size: 14px;
+    color: #718096;
+    margin-bottom: 8px;
+}
+
+.ticket-title {
+    font-size: 28px;
+    font-weight: 600;
+    color: #1a202c;
+    margin-bottom: 16px;
+}
+
+.ticket-meta {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.meta-label {
+    font-size: 12px;
+    color: #718096;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.meta-value {
+    font-size: 15px;
+    color: #2d3748;
+    font-weight: 500;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.status-open { background: #bee3f8; color: #2c5282; }
+.status-in-progress { background: #feebc8; color: #7c2d12; }
+.status-pending { background: #fbb6ce; color: #702459; }
+.status-resolved { background: #c6f6d5; color: #22543d; }
+.status-closed { background: #e2e8f0; color: #4a5568; }
+
+/* Priority Badges */
+.priority-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.priority-low { background: #bee3f8; color: #2c5282; }
+.priority-medium { background: #feebc8; color: #7c2d12; }
+.priority-high { background: #fed7d7; color: #742a2a; }
+.priority-critical { background: #feb2b2; color: #63171b; }
+
+/* Ticket Sections */
+.ticket-section {
+    margin-bottom: 32px;
+}
+
+.section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 12px;
+}
+
+.section-content {
+    font-size: 15px;
+    color: #4a5568;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+/* Comments */
+.comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.comment-item {
+    background: #f7fafc;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.comment-author {
+    font-weight: 600;
+    color: #2d3748;
+    font-size: 14px;
+}
+
+.comment-date {
+    font-size: 13px;
+    color: #718096;
+}
+
+.comment-text {
+    font-size: 14px;
+    color: #4a5568;
+    line-height: 1.5;
+}
+
+.no-comments {
+    text-align: center;
+    padding: 32px;
+    color: #a0aec0;
+    font-size: 14px;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.btn-primary {
+    padding: 12px 24px;
+    background: #3182ce;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-primary:hover {
+    background: #2c5282;
+}
+
+.btn-success {
+    padding: 12px 24px;
+    background: #38a169;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-success:hover {
+    background: #2f855a;
+}
+
+.btn-danger {
+    padding: 12px 24px;
+    background: #e53e3e;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-danger:hover {
+    background: #c53030;
+}
+
+.btn-secondary {
+    padding: 12px 24px;
+    background: white;
+    color: #4a5568;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+    background: #f7fafc;
+    border-color: #cbd5e0;
+}
+
+/* Resolution Notes */
+.resolution-box {
+    background: #f0fff4;
+    border: 1px solid #9ae6b4;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.resolution-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #22543d;
+    margin-bottom: 8px;
+}
+
+.resolution-text {
+    font-size: 14px;
+    color: #2f855a;
+    line-height: 1.5;
+}
+
+/* Error Message */
+.error-message {
+    background: #fed7d7;
+    border: 1px solid #fc8181;
+    border-radius: 8px;
+    padding: 16px;
+    color: #742a2a;
+    text-align: center;
+}
