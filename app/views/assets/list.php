@@ -8,7 +8,8 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_name = $_SESSION['name'];
 $user_role = $_SESSION['role'];
-$is_admin = ($user_role === 'Admin');
+$is_admin  = ($user_role === 'Admin');
+$can_add   = ($user_role === 'Admin' || $user_role === 'Asset Manager');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -20,18 +21,17 @@ $is_admin = ($user_role === 'Admin');
     <link rel="stylesheet" href="/internal_portal/public/css/admin-layout.css">
     <link rel="stylesheet" href="/internal_portal/public/css/tickets.css">
     <link rel="stylesheet" href="/internal_portal/public/css/assets.css">
+    <link rel="stylesheet" href="/internal_portal/public/css/create-asset-modal.css">
 </head>
 <body>
     <div class="mobile-overlay" id="mobileOverlay"></div>
 
     <div class="page-wrapper">
-        <!-- Professional Sidebar with Clean Icons -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-logo">LIU</div>
                 <div class="sidebar-title">Internal Portal</div>
             </div>
-            
             <nav class="sidebar-nav">
                 <div class="sidebar-nav-section">
                     <div class="sidebar-nav-section-title">Main</div>
@@ -48,7 +48,6 @@ $is_admin = ($user_role === 'Admin');
                         <span class="sidebar-nav-text">Assets</span>
                     </a>
                 </div>
-                
                 <div class="sidebar-nav-section">
                     <div class="sidebar-nav-section-title">Inventory</div>
                     <a href="../stock/list.php" class="sidebar-nav-item">
@@ -60,7 +59,6 @@ $is_admin = ($user_role === 'Admin');
                         <span class="sidebar-nav-text">Purchase Orders</span>
                     </a>
                 </div>
-                
                 <?php if ($is_admin): ?>
                 <div class="sidebar-nav-section">
                     <div class="sidebar-nav-section-title">Settings</div>
@@ -75,7 +73,6 @@ $is_admin = ($user_role === 'Admin');
                 </div>
                 <?php endif; ?>
             </nav>
-            
             <div class="sidebar-footer">
                 <a href="/internal_portal/app/views/auth/logout.php" class="sidebar-nav-item">
                     <span class="sidebar-nav-icon icon-logout"></span>
@@ -84,9 +81,7 @@ $is_admin = ($user_role === 'Admin');
             </div>
         </aside>
 
-        <!-- Main Content -->
         <main class="main-content">
-            <!-- Topbar -->
             <div class="topbar">
                 <div class="topbar-left">
                     <button class="hamburger-menu" id="hamburgerMenu">☰</button>
@@ -96,13 +91,13 @@ $is_admin = ($user_role === 'Admin');
                         <span class="breadcrumb-item active">Assets</span>
                     </div>
                 </div>
-                
                 <div class="topbar-search">
                     <input type="text" placeholder="Search tickets, assets, users...">
                 </div>
-                
                 <div class="topbar-right">
+                    <?php if ($can_add): ?>
                     <button class="btn btn-primary" onclick="openCreateAssetModal()">+ Add Asset</button>
+                    <?php endif; ?>
                     <button class="topbar-icon-btn" title="Notifications">
                         🔔
                         <span class="badge">3</span>
@@ -119,28 +114,22 @@ $is_admin = ($user_role === 'Admin');
                 </div>
             </div>
 
-            <!-- Page Content -->
             <div class="page-content">
                 <div class="page-header">
-                    <h1 class="page-title">Asset Inventory</h1>
-                    <p class="page-subtitle">Track and manage company assets</p>
+                    <h1 style="font-size:24px; font-weight:600; margin-bottom:8px; color:var(--color-text-primary);">Asset Inventory</h1>
+                    <p style="color:var(--color-text-secondary); font-size:14px; margin-bottom:32px;">Track and manage company assets</p>
                 </div>
 
-                <!-- Stats Row -->
-                <div class="stats-row" id="stats-row">
-                    <!-- Populated by JavaScript -->
-                </div>
+                <div class="stats-row" id="stats-row"></div>
 
-                <!-- Filters -->
                 <div class="filters-bar">
                     <div class="filters-row">
                         <div class="filter-group">
                             <label class="filter-label">Search Assets</label>
                             <div class="search-input-wrapper">
-                                <input type="text" class="search-input" id="search" placeholder="Search by name, tag, or model...">
+                                <input type="text" class="search-input" id="search" placeholder="Search by name, tag, serial...">
                             </div>
                         </div>
-                        
                         <div class="filter-group">
                             <label class="filter-label">Category</label>
                             <select class="filter-select" id="category-filter">
@@ -152,7 +141,6 @@ $is_admin = ($user_role === 'Admin');
                                 <option value="Other">Other</option>
                             </select>
                         </div>
-                        
                         <div class="filter-group">
                             <label class="filter-label">Status</label>
                             <select class="filter-select" id="status-filter">
@@ -163,12 +151,10 @@ $is_admin = ($user_role === 'Admin');
                                 <option value="Retired">Retired</option>
                             </select>
                         </div>
-                        
                         <button class="btn-filter" onclick="applyFilters()">Apply</button>
                     </div>
                 </div>
 
-                <!-- Assets Table -->
                 <div class="table-card">
                     <div id="loading">
                         <div class="loading-state">
@@ -176,10 +162,8 @@ $is_admin = ($user_role === 'Admin');
                             <p>Loading assets...</p>
                         </div>
                     </div>
-                    
-                    <div id="error" style="display: none; padding: 24px; text-align: center; color: var(--color-danger);"></div>
-                    
-                    <div id="assets-container" style="display: none;">
+                    <div id="error" style="display:none; padding:24px; text-align:center; color:var(--color-danger);"></div>
+                    <div id="assets-container" style="display:none;">
                         <div class="table-wrapper">
                             <table class="assets-table">
                                 <thead>
@@ -189,25 +173,23 @@ $is_admin = ($user_role === 'Admin');
                                         <th>Category</th>
                                         <th>Status</th>
                                         <th>Assigned To</th>
-                                        <th>Location</th>
-                                        <th style="text-align: center;">Actions</th>
+                                        <th>Campus</th>
+                                        <th style="text-align:center;">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="assets-tbody"></tbody>
                             </table>
                         </div>
-                        
                         <div class="pagination-wrapper">
                             <div class="pagination-info" id="pagination-info"></div>
                             <div class="pagination-controls" id="pagination-controls"></div>
                         </div>
                     </div>
-                    
-                    <div id="empty-state" style="display: none;">
+                    <div id="empty-state" style="display:none;">
                         <div class="empty-state">
                             <div class="empty-icon">💼</div>
                             <h3 class="empty-title">No assets found</h3>
-                            <p class="empty-text">Try adjusting your filters or add a new asset to get started.</p>
+                            <p class="empty-text">Try adjusting your filters or add a new asset.</p>
                         </div>
                     </div>
                 </div>
@@ -217,5 +199,6 @@ $is_admin = ($user_role === 'Admin');
 
     <script src="/internal_portal/public/js/mobile-menu.js"></script>
     <script src="/internal_portal/public/js/assets.js"></script>
+    <script src="/internal_portal/public/js/create-asset-modal.js"></script>
 </body>
 </html>

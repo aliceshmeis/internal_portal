@@ -6,27 +6,20 @@ let filteredAssets = [];
 let currentPage = 1;
 const itemsPerPage = 10;
 
-// Load assets on page load
 document.addEventListener('DOMContentLoaded', () => {
     loadAssets();
     setupSearchDebounce();
     setupFilterListeners();
 });
 
-// Load assets from API
 async function loadAssets() {
     try {
         const response = await fetch(`${API_BASE}/assets/list.php`, {
             method: 'GET',
             credentials: 'include'
         });
-        
         const result = await response.json();
-        
-        if (!response.ok) {
-            throw new Error(result.message || 'Failed to load assets');
-        }
-        
+        if (!response.ok) throw new Error(result.message || 'Failed to load assets');
         if (result.success && result.data) {
             allAssets = result.data;
             filteredAssets = [...allAssets];
@@ -41,141 +34,142 @@ async function loadAssets() {
     }
 }
 
-// Render stats cards
+// Stats cards - number focused, lighter design
 function renderStats() {
-    const statsRow = document.getElementById('stats-row');
-    
-    const total = allAssets.length;
-    const available = allAssets.filter(a => a.status === 'Available').length;
-    const inUse = allAssets.filter(a => a.status === 'In Use').length;
+    const statsRow    = document.getElementById('stats-row');
+    const total       = allAssets.length;
+    const available   = allAssets.filter(a => a.status === 'Available').length;
+    const inUse       = allAssets.filter(a => a.status === 'In Use').length;
     const maintenance = allAssets.filter(a => a.status === 'Maintenance').length;
-    
+
     statsRow.innerHTML = `
         <div class="stat-card">
-            <div class="stat-icon blue">💼</div>
             <div class="stat-content">
-                <div class="stat-label">Total Assets</div>
                 <div class="stat-value">${total}</div>
+                <div class="stat-label">Total Assets</div>
+            </div>
+            <div class="stat-icon gray">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+                </svg>
             </div>
         </div>
-        
         <div class="stat-card">
-            <div class="stat-icon green">✓</div>
             <div class="stat-content">
-                <div class="stat-label">Available</div>
                 <div class="stat-value">${available}</div>
+                <div class="stat-label">Available</div>
+            </div>
+            <div class="stat-icon green">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M20 6L9 17l-5-5"/>
+                </svg>
             </div>
         </div>
-        
         <div class="stat-card">
-            <div class="stat-icon blue">🔧</div>
             <div class="stat-content">
-                <div class="stat-label">In Use</div>
                 <div class="stat-value">${inUse}</div>
+                <div class="stat-label">In Use</div>
+            </div>
+            <div class="stat-icon blue">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+                </svg>
             </div>
         </div>
-        
         <div class="stat-card">
-            <div class="stat-icon yellow">⚠️</div>
             <div class="stat-content">
-                <div class="stat-label">Maintenance</div>
                 <div class="stat-value">${maintenance}</div>
+                <div class="stat-label">Maintenance</div>
+            </div>
+            <div class="stat-icon yellow">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                </svg>
             </div>
         </div>
     `;
 }
 
-// Display assets in table
 function displayAssets() {
-    const loading = document.getElementById('loading');
-    const container = document.getElementById('assets-container');
+    const loading    = document.getElementById('loading');
+    const container  = document.getElementById('assets-container');
     const emptyState = document.getElementById('empty-state');
-    const tbody = document.getElementById('assets-tbody');
-    
+    const tbody      = document.getElementById('assets-tbody');
+
     loading.style.display = 'none';
-    
+
     if (filteredAssets.length === 0) {
-        container.style.display = 'none';
+        container.style.display  = 'none';
         emptyState.style.display = 'block';
         return;
     }
-    
-    container.style.display = 'block';
+
+    container.style.display  = 'block';
     emptyState.style.display = 'none';
-    
-    // Pagination
+
     const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const pageAssets = filteredAssets.slice(startIndex, endIndex);
-    
-    // Render assets
+    const pageAssets = filteredAssets.slice(startIndex, startIndex + itemsPerPage);
+
     tbody.innerHTML = pageAssets.map(asset => `
         <tr>
-            <td><span class="asset-tag">A-${String(asset.asset_tag || asset.id).padStart(4, '0')}</span></td>
+            <td><span class="asset-tag">${escapeHtml(asset.asset_tag || 'N/A')}</span></td>
             <td>
                 <div class="asset-name">${escapeHtml(asset.name)}</div>
-                <div class="asset-model">${escapeHtml(asset.model || 'N/A')}</div>
+                <div class="asset-sub">${escapeHtml(asset.serial_number || '—')}</div>
             </td>
-            <td>${getCategoryBadge(asset.category_name)}</td>
+            <td>${getCategoryLabel(asset.category)}</td>
             <td>${getStatusBadge(asset.status)}</td>
             <td>${getAssignedUser(asset.assigned_user_name)}</td>
-            <td>${escapeHtml(asset.location || 'N/A')}</td>
+            <td>${escapeHtml(asset.campus_name || 'N/A')}</td>
             <td>
                 <div class="actions-cell">
-                    <button class="action-btn-small" onclick="viewAsset(${asset.id})">View</button>
-                    ${asset.status === 'Available' ? 
-                        `<button class="action-btn-small" onclick="assignAsset(${asset.id})">Assign</button>` : 
-                        asset.status === 'In Use' ? 
-                        `<button class="action-btn-small" onclick="returnAsset(${asset.id})">Return</button>` : 
-                        ''
+                    <button class="btn-view" onclick="viewAsset(${asset.id})">View</button>
+                    ${asset.status === 'Available'
+                        ? `<button class="btn-action-outline" onclick="assignAsset(${asset.id})">Assign</button>`
+                        : asset.status === 'In Use'
+                        ? `<button class="btn-action-outline danger" onclick="returnAsset(${asset.id})">Return</button>`
+                        : ''
                     }
                 </div>
             </td>
         </tr>
     `).join('');
-    
+
     renderPagination();
 }
 
-// Category Badge with Icons
-function getCategoryBadge(category) {
-    const categoryMap = {
-        'Laptop': { icon: '💻', class: 'category-laptop' },
-        'Printer': { icon: '🖨️', class: 'category-printer' },
-        'Network Equipment': { icon: '🌐', class: 'category-network' },
-        'Furniture': { icon: '🪑', class: 'category-furniture' }
+// Category - simple gray icon + text, NO colored background
+function getCategoryLabel(category) {
+    const icons = {
+        'Laptop':            `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M0 21h24"/></svg>`,
+        'Printer':           `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7"/><rect x="6" y="14" width="12" height="8"/><rect x="6" y="9" width="12" height="5"/><path d="M18 11h.01"/></svg>`,
+        'Network Equipment': `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
+        'Furniture':         `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3"/><rect x="2" y="9" width="20" height="8" rx="1"/><path d="M6 17v2M18 17v2"/></svg>`,
+        'Other':             `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>`,
     };
-    
-    const cat = categoryMap[category] || { icon: '📦', class: 'category-other' };
-    return `<span class="category-badge ${cat.class}">
-        <span class="category-icon">${cat.icon}</span>
-        ${category || 'Other'}
-    </span>`;
+    const icon = icons[category] || icons['Other'];
+    return `<span class="category-label"><span class="category-icon-svg">${icon}</span>${escapeHtml(category || 'Other')}</span>`;
 }
 
-// Status Badge
+// Status - only strong color element
 function getStatusBadge(status) {
     const classes = {
-        'Available': 'status-available',
-        'In Use': 'status-in-use',
+        'Available':   'status-available',
+        'In Use':      'status-in-use',
         'Maintenance': 'status-maintenance',
-        'Retired': 'status-retired'
+        'Retired':     'status-retired'
     };
-    const className = classes[status] || 'status-available';
-    return `<span class="asset-status ${className}">${status}</span>`;
+    return `<span class="asset-status ${classes[status] || 'status-retired'}">${escapeHtml(status || 'Unknown')}</span>`;
 }
 
-// Assigned User
+// Assigned User - lighter, smaller avatar
 function getAssignedUser(userName) {
-    if (!userName) {
-        return `<span class="unassigned-label">Unassigned</span>`;
-    }
-    
+    if (!userName) return `<span class="unassigned-label">—</span>`;
     const initials = userName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
     return `
         <div class="assigned-user">
             <div class="user-avatar-small">${initials}</div>
-            <span class="user-name">${escapeHtml(userName)}</span>
+            <span class="user-name-text">${escapeHtml(userName)}</span>
         </div>
     `;
 }
@@ -183,110 +177,82 @@ function getAssignedUser(userName) {
 // Pagination
 function renderPagination() {
     const totalPages = Math.ceil(filteredAssets.length / itemsPerPage);
-    const info = document.getElementById('pagination-info');
-    const controls = document.getElementById('pagination-controls');
-    
+    const info       = document.getElementById('pagination-info');
+    const controls   = document.getElementById('pagination-controls');
+
     const startItem = (currentPage - 1) * itemsPerPage + 1;
-    const endItem = Math.min(currentPage * itemsPerPage, filteredAssets.length);
-    info.textContent = `Showing ${startItem}-${endItem} of ${filteredAssets.length}`;
-    
-    let buttonsHTML = '';
-    buttonsHTML += `<button class="page-btn" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>←</button>`;
-    
-    const maxButtons = 5;
-    let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
-    let endPage = Math.min(totalPages, startPage + maxButtons - 1);
-    
-    if (endPage - startPage < maxButtons - 1) {
-        startPage = Math.max(1, endPage - maxButtons + 1);
-    }
-    
+    const endItem   = Math.min(currentPage * itemsPerPage, filteredAssets.length);
+    info.textContent = `Showing ${startItem}–${endItem} of ${filteredAssets.length}`;
+
+    let html = `<button class="page-btn" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>←</button>`;
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage   = Math.min(totalPages, startPage + 4);
+    if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
     for (let i = startPage; i <= endPage; i++) {
-        buttonsHTML += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+        html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
     }
-    
-    buttonsHTML += `<button class="page-btn" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>→</button>`;
-    
-    controls.innerHTML = buttonsHTML;
+    html += `<button class="page-btn" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>→</button>`;
+    controls.innerHTML = html;
 }
 
 function changePage(page) {
     const totalPages = Math.ceil(filteredAssets.length / itemsPerPage);
     if (page < 1 || page > totalPages) return;
-    
     currentPage = page;
     displayAssets();
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// Apply filters
+// ✅ FIXED: uses asset.category (not category_name) and proper asset_tag search
 function applyFilters() {
-    const searchTerm = document.getElementById('search').value.toLowerCase();
+    const searchTerm     = document.getElementById('search').value.toLowerCase().trim();
     const categoryFilter = document.getElementById('category-filter').value;
-    const statusFilter = document.getElementById('status-filter').value;
-    
+    const statusFilter   = document.getElementById('status-filter').value;
+
     filteredAssets = allAssets.filter(asset => {
-        const matchesSearch = !searchTerm || 
-            asset.name.toLowerCase().includes(searchTerm) ||
-            asset.model?.toLowerCase().includes(searchTerm) ||
-            String(asset.asset_tag || asset.id).includes(searchTerm);
-        
-        const matchesCategory = !categoryFilter || asset.category_name === categoryFilter;
-        const matchesStatus = !statusFilter || asset.status === statusFilter;
-        
+        const matchesSearch = !searchTerm ||
+            (asset.name          && asset.name.toLowerCase().includes(searchTerm))          ||
+            (asset.asset_tag     && asset.asset_tag.toLowerCase().includes(searchTerm))     ||
+            (asset.serial_number && asset.serial_number.toLowerCase().includes(searchTerm));
+
+        const matchesCategory = !categoryFilter || asset.category === categoryFilter; // ✅ FIXED
+        const matchesStatus   = !statusFilter   || asset.status   === statusFilter;
+
         return matchesSearch && matchesCategory && matchesStatus;
     });
-    
+
     currentPage = 1;
     displayAssets();
 }
 
-// Search debounce
 let searchTimeout;
 function setupSearchDebounce() {
-    document.getElementById('search').addEventListener('input', () => {
+    document.getElementById('search')?.addEventListener('input', () => {
         clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(applyFilters, 500);
+        searchTimeout = setTimeout(applyFilters, 400);
     });
 }
 
-// Filter listeners
 function setupFilterListeners() {
-    document.getElementById('category-filter').addEventListener('change', applyFilters);
-    document.getElementById('status-filter').addEventListener('change', applyFilters);
+    document.getElementById('category-filter')?.addEventListener('change', applyFilters);
+    document.getElementById('status-filter')?.addEventListener('change', applyFilters);
 }
 
-// Actions
-function viewAsset(id) {
-    window.location.href = `view.php?id=${id}`;
-}
+function viewAsset(id)   { window.location.href = `view.php?id=${id}`; }
+function assignAsset(id) { alert(`Assign asset ${id} — modal coming soon!`); }
+function returnAsset(id) { if (confirm('Return this asset?')) alert(`Return asset ${id} — coming soon!`); }
+function openCreateAssetModal() { alert('Create Asset modal — coming soon!'); }
 
-function assignAsset(id) {
-    alert(`Assign asset ${id} - Modal coming soon!`);
-}
-
-function returnAsset(id) {
-    if (confirm('Return this asset?')) {
-        alert(`Return asset ${id} - API call coming soon!`);
-    }
-}
-
-function openCreateAssetModal() {
-    alert('Create Asset modal will be implemented next!');
-}
-
-// Helpers
 function escapeHtml(text) {
+    if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
 }
 
 function showError(message) {
-    const loading = document.getElementById('loading');
+    document.getElementById('loading').style.display = 'none';
     const error = document.getElementById('error');
-    
-    loading.style.display = 'none';
     error.style.display = 'block';
     error.textContent = `Error: ${message}`;
 }

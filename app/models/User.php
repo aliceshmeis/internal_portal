@@ -6,6 +6,10 @@
 class User extends Model {
     protected $table = 'users';
     
+    // =============================================
+    // EXISTING METHODS (unchanged)
+    // =============================================
+
     /**
      * Find user by Google ID
      */
@@ -39,18 +43,17 @@ class User extends Model {
         
         $stmt = $this->db->prepare($query);
         
-        // Default values for new users
-        $defaultRole = ROLE_STAFF; // New users are Staff by default
-        $defaultCampusId = 1; // Assign to first campus by default (you can change this)
-        $isActive = 1;
+        $defaultRole     = ROLE_STAFF;
+        $defaultCampusId = 1;
+        $isActive        = 1;
         
-        $stmt->bindParam(':google_id', $googleData['id']);
-        $stmt->bindParam(':email', $googleData['email']);
-        $stmt->bindParam(':name', $googleData['name']);
-        $stmt->bindParam(':profile_picture', $googleData['picture']);
-        $stmt->bindParam(':role', $defaultRole);
-        $stmt->bindParam(':campus_id', $defaultCampusId);
-        $stmt->bindParam(':is_active', $isActive);
+        $stmt->bindParam(':google_id',        $googleData['id']);
+        $stmt->bindParam(':email',            $googleData['email']);
+        $stmt->bindParam(':name',             $googleData['name']);
+        $stmt->bindParam(':profile_picture',  $googleData['picture']);
+        $stmt->bindParam(':role',             $defaultRole);
+        $stmt->bindParam(':campus_id',        $defaultCampusId);
+        $stmt->bindParam(':is_active',        $isActive);
         
         if ($stmt->execute()) {
             return $this->db->lastInsertId();
@@ -66,6 +69,99 @@ class User extends Model {
         $query = "UPDATE " . $this->table . " SET last_login = NOW() WHERE id = :id";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':id', $userId);
+        return $stmt->execute();
+    }
+
+    // =============================================
+    // NEW METHODS (for admin user management)
+    // =============================================
+
+    /**
+     * Get all users with campus name
+     */
+    public function getAll() {
+        $query = "SELECT u.id, u.name, u.email, u.role, u.campus_id,
+                         u.is_active, u.login_method, u.last_login, u.created_at,
+                         c.campus_name
+                  FROM " . $this->table . " u
+                  LEFT JOIN campuses c ON u.campus_id = c.id
+                  ORDER BY u.created_at DESC";
+
+        $stmt = $this->db->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Find user by ID (with campus)
+     */
+    public function findById($id) {
+        $query = "SELECT u.*, c.campus_name
+                  FROM " . $this->table . " u
+                  LEFT JOIN campuses c ON u.campus_id = c.id
+                  WHERE u.id = :id LIMIT 1";
+
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch();
+    }
+
+    /**
+     * Create a new user (email/password login)
+     */
+    public function createUser($data) {
+        $query = "INSERT INTO " . $this->table . "
+                    (name, email, password, role, campus_id, is_active, login_method, created_at)
+                  VALUES
+                    (:name, :email, :password, :role, :campus_id, :is_active, 'email', NOW())";
+
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':name',      $data['name']);
+        $stmt->bindParam(':email',     $data['email']);
+        $stmt->bindParam(':password',  $data['password']);
+        $stmt->bindParam(':role',      $data['role']);
+        $stmt->bindParam(':campus_id', $data['campus_id'], PDO::PARAM_INT);
+        $stmt->bindParam(':is_active', $data['is_active'], PDO::PARAM_INT);
+
+        if ($stmt->execute()) {
+            return $this->findById($this->db->lastInsertId());
+        }
+
+        return false;
+    }
+
+    /**
+     * Update a user
+     */
+    public function updateUser($id, $data) {
+        $fields = [];
+        $params = [':id' => $id];
+
+        foreach ($data as $key => $value) {
+            $fields[]       = "$key = :$key";
+            $params[":$key"] = $value;
+        }
+
+        $fields[] = "updated_at = NOW()";
+
+        $query = "UPDATE " . $this->table . " SET " . implode(', ', $fields) . " WHERE id = :id";
+        $stmt  = $this->db->prepare($query);
+
+        if ($stmt->execute($params)) {
+            return $this->findById($id);
+        }
+
+        return false;
+    }
+
+    /**
+     * Delete a user
+     */
+    public function deleteUser($id) {
+        $query = "DELETE FROM " . $this->table . " WHERE id = :id";
+        $stmt  = $this->db->prepare($query);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         return $stmt->execute();
     }
 }

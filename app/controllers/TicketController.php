@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . '/../../core/Auth.php';
-require_once __DIR__ . '/../../core/Response.php';
-require_once __DIR__ . '/../../core/Request.php';
+require_once __DIR__ . '/../../core/Auth.php';//checks if user logged in
+require_once __DIR__ . '/../../core/Response.php';//sends JSON responses in a standard format (success, error, unauthorized, forbidden...).
+require_once __DIR__ . '/../../core/Request.php';////reads request method (GET/POST/PUT/PATCH) and gets inputs (query params / JSON body)
 require_once __DIR__ . '/../models/Ticket.php';
 
 class TicketController {

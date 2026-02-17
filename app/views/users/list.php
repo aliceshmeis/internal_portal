@@ -1,13 +1,11 @@
 <?php
 session_start();
 
-// Check authentication
 if (!isset($_SESSION['user_id'])) {
     header('Location: /internal_portal/app/views/auth/login.php');
     exit;
 }
 
-// Admin only
 if ($_SESSION['role'] !== 'Admin') {
     header('Location: /internal_portal/app/views/dashboard/dashboard.php');
     exit;
@@ -21,23 +19,22 @@ $user_role = $_SESSION['role'];
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Users Management - Internal Portal</title>
+    <title>Users - Internal Portal</title>
     <link rel="stylesheet" href="/internal_portal/public/css/main-style.css">
     <link rel="stylesheet" href="/internal_portal/public/css/admin-layout.css">
     <link rel="stylesheet" href="/internal_portal/public/css/tickets.css">
     <link rel="stylesheet" href="/internal_portal/public/css/users.css">
+    <link rel="stylesheet" href="/internal_portal/public/css/add-user-modal.css">
 </head>
 <body>
     <div class="mobile-overlay" id="mobileOverlay"></div>
 
     <div class="page-wrapper">
-        <!-- Professional Sidebar with Clean Icons -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-logo">LIU</div>
                 <div class="sidebar-title">Internal Portal</div>
             </div>
-            
             <nav class="sidebar-nav">
                 <div class="sidebar-nav-section">
                     <div class="sidebar-nav-section-title">Main</div>
@@ -54,7 +51,6 @@ $user_role = $_SESSION['role'];
                         <span class="sidebar-nav-text">Assets</span>
                     </a>
                 </div>
-                
                 <div class="sidebar-nav-section">
                     <div class="sidebar-nav-section-title">Inventory</div>
                     <a href="../stock/list.php" class="sidebar-nav-item">
@@ -66,7 +62,6 @@ $user_role = $_SESSION['role'];
                         <span class="sidebar-nav-text">Purchase Orders</span>
                     </a>
                 </div>
-                
                 <div class="sidebar-nav-section">
                     <div class="sidebar-nav-section-title">Settings</div>
                     <a href="list.php" class="sidebar-nav-item active">
@@ -79,7 +74,6 @@ $user_role = $_SESSION['role'];
                     </a>
                 </div>
             </nav>
-            
             <div class="sidebar-footer">
                 <a href="/internal_portal/app/views/auth/logout.php" class="sidebar-nav-item">
                     <span class="sidebar-nav-icon icon-logout"></span>
@@ -88,9 +82,7 @@ $user_role = $_SESSION['role'];
             </div>
         </aside>
 
-        <!-- Main Content -->
         <main class="main-content">
-            <!-- Topbar -->
             <div class="topbar">
                 <div class="topbar-left">
                     <button class="hamburger-menu" id="hamburgerMenu">☰</button>
@@ -100,21 +92,17 @@ $user_role = $_SESSION['role'];
                         <span class="breadcrumb-item active">Users</span>
                     </div>
                 </div>
-                
                 <div class="topbar-search">
                     <input type="text" placeholder="Search tickets, assets, users...">
                 </div>
-                
                 <div class="topbar-right">
-                    <button class="btn btn-primary" onclick="openCreateModal()">+ New User</button>
+                    <button class="btn btn-primary" onclick="openAddUserModal()">+ Add User</button>
                     <button class="topbar-icon-btn" title="Notifications">
                         🔔
                         <span class="badge">3</span>
                     </button>
                     <div class="header-user">
-                        <div class="header-user-avatar">
-                            <?php echo strtoupper(substr($user_name, 0, 1)); ?>
-                        </div>
+                        <div class="header-user-avatar"><?php echo strtoupper(substr($user_name, 0, 1)); ?></div>
                         <div class="header-user-info">
                             <div class="header-user-name"><?php echo htmlspecialchars($user_name); ?></div>
                             <div class="header-user-role"><?php echo htmlspecialchars($user_role); ?></div>
@@ -125,11 +113,10 @@ $user_role = $_SESSION['role'];
 
             <div class="page-content">
                 <div class="page-header">
-                    <h1 style="font-size: 24px; font-weight: 600; margin-bottom: 8px; color: var(--color-text-primary);">User Management</h1>
-                    <p style="color: var(--color-text-secondary); margin-bottom: 32px; font-size: 14px;">Manage system users and permissions</p>
+                    <h1 style="font-size:24px; font-weight:600; margin-bottom:8px; color:var(--color-text-primary);">User Management</h1>
+                    <p style="color:var(--color-text-secondary); margin-bottom:32px; font-size:14px;">Manage staff access and permissions</p>
                 </div>
 
-                <!-- Filters -->
                 <div class="filters-bar">
                     <div class="filters-row">
                         <div class="filter-group">
@@ -138,7 +125,6 @@ $user_role = $_SESSION['role'];
                                 <input type="text" class="search-input" id="search" placeholder="Search by name or email...">
                             </div>
                         </div>
-                        
                         <div class="filter-group">
                             <label class="filter-label">Role</label>
                             <select class="filter-select" id="role-filter">
@@ -149,7 +135,6 @@ $user_role = $_SESSION['role'];
                                 <option value="Viewer">Viewer</option>
                             </select>
                         </div>
-                        
                         <div class="filter-group">
                             <label class="filter-label">Status</label>
                             <select class="filter-select" id="status-filter">
@@ -158,12 +143,10 @@ $user_role = $_SESSION['role'];
                                 <option value="0">Inactive</option>
                             </select>
                         </div>
-                        
                         <button class="btn-filter" onclick="applyFilters()">Apply</button>
                     </div>
                 </div>
 
-                <!-- Users Table -->
                 <div class="table-card">
                     <div id="loading">
                         <div class="loading-state">
@@ -171,33 +154,30 @@ $user_role = $_SESSION['role'];
                             <p>Loading users...</p>
                         </div>
                     </div>
-                    
-                    <div id="error" style="display: none; padding: 24px; text-align: center; color: var(--color-danger);"></div>
-                    
-                    <div id="users-container" style="display: none;">
+                    <div id="error" style="display:none; padding:24px; text-align:center; color:var(--color-danger);"></div>
+                    <div id="users-container" style="display:none;">
                         <div class="table-wrapper">
                             <table class="users-table">
                                 <thead>
                                     <tr>
                                         <th>User</th>
+                                        <th>Email</th>
                                         <th>Role</th>
                                         <th>Campus</th>
                                         <th>Status</th>
                                         <th>Last Login</th>
-                                        <th style="text-align: center;">Actions</th>
+                                        <th style="text-align:center;">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="users-tbody"></tbody>
                             </table>
                         </div>
-                        
                         <div class="pagination-wrapper">
                             <div class="pagination-info" id="pagination-info"></div>
                             <div class="pagination-controls" id="pagination-controls"></div>
                         </div>
                     </div>
-                    
-                    <div id="empty-state" style="display: none;">
+                    <div id="empty-state" style="display:none;">
                         <div class="empty-state">
                             <div class="empty-icon">👥</div>
                             <h3 class="empty-title">No users found</h3>
@@ -211,5 +191,6 @@ $user_role = $_SESSION['role'];
 
     <script src="/internal_portal/public/js/mobile-menu.js"></script>
     <script src="/internal_portal/public/js/users.js"></script>
+    <script src="/internal_portal/public/js/add-user-modal.js"></script>
 </body>
 </html>

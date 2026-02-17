@@ -19,6 +19,7 @@ $is_admin = ($user_role === 'Admin');
     <link rel="stylesheet" href="/internal_portal/public/css/main-style.css">
     <link rel="stylesheet" href="/internal_portal/public/css/admin-layout.css">
     <link rel="stylesheet" href="/internal_portal/public/css/tickets.css">
+    <link rel="stylesheet" href="/internal_portal/public/css/create-ticket-modal.css">
 </head>
 <body>
     <div class="mobile-overlay" id="mobileOverlay"></div>
@@ -103,7 +104,7 @@ $is_admin = ($user_role === 'Admin');
                 <div class="topbar-right">
                     <button class="btn btn-primary" onclick="openCreateModal()">+ New Ticket</button>
                     <button class="topbar-icon-btn" title="Notifications">
-                        🔔
+                        
                         <span class="badge">3</span>
                     </button>
                     <div class="header-user">
@@ -211,5 +212,6 @@ $is_admin = ($user_role === 'Admin');
 
     <script src="/internal_portal/public/js/mobile-menu.js"></script>
     <script src="/internal_portal/public/js/tickets.js"></script>
+    <script src="/internal_portal/public/js/create-ticket-modal.js"></script>
 </body>
 </html>

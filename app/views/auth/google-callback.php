@@ -2,7 +2,7 @@
 session_start();//lets you save logindata in session
 
 require_once __DIR__ . '/../../../config/google.php';
-require_once __DIR__ . '/../../../config/database.php';connects to my sql
+require_once __DIR__ . '/../../../config/database.php';
 
 // Get authorization code
 if (!isset($_GET['code'])) {

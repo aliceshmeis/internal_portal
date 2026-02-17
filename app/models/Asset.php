@@ -5,9 +5,6 @@ class Asset {
     
     /**
      * Create a new asset
-     * 
-     * @param array $data
-     * @return array|false
      */
     public static function create($data) {
         try {
@@ -19,22 +16,26 @@ class Asset {
             
             $query = "INSERT INTO assets 
                       (asset_tag, campus_id, category, name, description, serial_number, status, 
-                       purchase_date, purchase_cost, warranty_expiry, created_at) 
+                       assigned_to, purchase_date, purchase_cost, warranty_expiry, created_at) 
                       VALUES 
                       (:asset_tag, :campus_id, :category, :name, :description, :serial_number, :status,
-                       :purchase_date, :purchase_cost, :warranty_expiry, NOW())";
+                       :assigned_to, :purchase_date, :purchase_cost, :warranty_expiry, NOW())";
             
             $stmt = $db->prepare($query);
-            $stmt->bindParam(':asset_tag', $asset_tag);
-            $stmt->bindParam(':campus_id', $data['campus_id']);
-            $stmt->bindParam(':category', $data['category']);
-            $stmt->bindParam(':name', $data['name']);
-            $stmt->bindParam(':description', $data['description']);
-            $stmt->bindParam(':serial_number', $data['serial_number']);
-            $stmt->bindParam(':status', $data['status']);
-            $stmt->bindParam(':purchase_date', $data['purchase_date']);
-            $stmt->bindParam(':purchase_cost', $data['purchase_cost']);
+            $stmt->bindParam(':asset_tag',       $asset_tag);
+            $stmt->bindParam(':campus_id',       $data['campus_id']);
+            $stmt->bindParam(':category',        $data['category']);
+            $stmt->bindParam(':name',            $data['name']);
+            $stmt->bindParam(':description',     $data['description']);
+            $stmt->bindParam(':serial_number',   $data['serial_number']);
+            $stmt->bindParam(':status',          $data['status']);
+            $stmt->bindParam(':purchase_date',   $data['purchase_date']);
+            $stmt->bindParam(':purchase_cost',   $data['purchase_cost']);
             $stmt->bindParam(':warranty_expiry', $data['warranty_expiry']);
+
+            // assigned_to can be null
+            $assigned_to = $data['assigned_to'] ?? null;
+            $stmt->bindParam(':assigned_to', $assigned_to, PDO::PARAM_INT);
             
             if ($stmt->execute()) {
                 return self::find($db->lastInsertId());
@@ -47,10 +48,7 @@ class Asset {
     }
     
     /**
-     * Find asset by ID
-     * 
-     * @param int $id
-     * @return array|false
+     * Find asset by ID - with assigned user name
      */
     public static function find($id) {
         try {
@@ -59,10 +57,11 @@ class Asset {
             
             $query = "SELECT a.*, 
                       c.campus_name,
-                      u.name as assigned_user_name, u.email as assigned_user_email
+                      u.name  AS assigned_user_name,
+                      u.email AS assigned_user_email
                       FROM assets a
                       LEFT JOIN campuses c ON a.campus_id = c.id
-                      LEFT JOIN users u ON a.assigned_to = u.id
+                      LEFT JOIN users u    ON a.assigned_to = u.id
                       WHERE a.id = :id";
             
             $stmt = $db->prepare($query);
@@ -77,42 +76,42 @@ class Asset {
     
     /**
      * Get all assets (Admin view)
-     * 
-     * @param array $filters
-     * @return array
      */
     public static function getAll($filters = []) {
         try {
             $database = new Database();
             $db = $database->getConnection();
             
-            $query = "SELECT a.*, c.campus_name, u.name as assigned_user_name
+            $query = "SELECT a.*, 
+                      c.campus_name,
+                      u.name  AS assigned_user_name,
+                      u.email AS assigned_user_email
                       FROM assets a
                       LEFT JOIN campuses c ON a.campus_id = c.id
-                      LEFT JOIN users u ON a.assigned_to = u.id
+                      LEFT JOIN users u    ON a.assigned_to = u.id
                       WHERE 1=1";
+
+            $params = [];
             
             if (!empty($filters['category'])) {
                 $query .= " AND a.category = :category";
+                $params[':category'] = $filters['category'];
             }
             
             if (!empty($filters['status'])) {
                 $query .= " AND a.status = :status";
+                $params[':status'] = $filters['status'];
+            }
+
+            if (!empty($filters['search'])) {
+                $query .= " AND (a.name LIKE :search OR a.asset_tag LIKE :search OR a.serial_number LIKE :search)";
+                $params[':search'] = '%' . $filters['search'] . '%';
             }
             
             $query .= " ORDER BY a.created_at DESC";
             
             $stmt = $db->prepare($query);
-            
-            if (!empty($filters['category'])) {
-                $stmt->bindParam(':category', $filters['category']);
-            }
-            
-            if (!empty($filters['status'])) {
-                $stmt->bindParam(':status', $filters['status']);
-            }
-            
-            $stmt->execute();
+            $stmt->execute($params);
             
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
@@ -121,45 +120,43 @@ class Asset {
     }
     
     /**
-     * Get assets by campus
-     * 
-     * @param int $campus_id
-     * @param array $filters
-     * @return array
+     * Get assets by campus (Staff/Asset Manager view)
      */
     public static function getByCampus($campus_id, $filters = []) {
         try {
             $database = new Database();
             $db = $database->getConnection();
             
-            $query = "SELECT a.*, c.campus_name, u.name as assigned_user_name
+            $query = "SELECT a.*, 
+                      c.campus_name,
+                      u.name  AS assigned_user_name,
+                      u.email AS assigned_user_email
                       FROM assets a
                       LEFT JOIN campuses c ON a.campus_id = c.id
-                      LEFT JOIN users u ON a.assigned_to = u.id
+                      LEFT JOIN users u    ON a.assigned_to = u.id
                       WHERE a.campus_id = :campus_id";
+
+            $params = [':campus_id' => $campus_id];
             
             if (!empty($filters['category'])) {
                 $query .= " AND a.category = :category";
+                $params[':category'] = $filters['category'];
             }
             
             if (!empty($filters['status'])) {
                 $query .= " AND a.status = :status";
+                $params[':status'] = $filters['status'];
+            }
+
+            if (!empty($filters['search'])) {
+                $query .= " AND (a.name LIKE :search OR a.asset_tag LIKE :search OR a.serial_number LIKE :search)";
+                $params[':search'] = '%' . $filters['search'] . '%';
             }
             
             $query .= " ORDER BY a.created_at DESC";
             
             $stmt = $db->prepare($query);
-            $stmt->bindParam(':campus_id', $campus_id);
-            
-            if (!empty($filters['category'])) {
-                $stmt->bindParam(':category', $filters['category']);
-            }
-            
-            if (!empty($filters['status'])) {
-                $stmt->bindParam(':status', $filters['status']);
-            }
-            
-            $stmt->execute();
+            $stmt->execute($params);
             
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
@@ -169,10 +166,6 @@ class Asset {
     
     /**
      * Update asset
-     * 
-     * @param int $id
-     * @param array $data
-     * @return array|false
      */
     public static function update($id, $data) {
         try {
@@ -188,7 +181,6 @@ class Asset {
             }
             
             $fields[] = "updated_at = NOW()";
-            
             $query = "UPDATE assets SET " . implode(', ', $fields) . " WHERE id = :id";
             
             $stmt = $db->prepare($query);
@@ -205,9 +197,6 @@ class Asset {
     
     /**
      * Retire/delete asset (soft delete)
-     * 
-     * @param int $id
-     * @return array|false
      */
     public static function delete($id) {
         try {
@@ -235,10 +224,6 @@ class Asset {
     
     /**
      * Assign asset to user
-     * 
-     * @param int $id
-     * @param int $user_id
-     * @return array|false
      */
     public static function assign($id, $user_id) {
         try {
@@ -252,7 +237,7 @@ class Asset {
                       WHERE id = :id";
             
             $stmt = $db->prepare($query);
-            $stmt->bindParam(':id', $id);
+            $stmt->bindParam(':id',      $id);
             $stmt->bindParam(':user_id', $user_id);
             
             if ($stmt->execute()) {
@@ -267,9 +252,6 @@ class Asset {
     
     /**
      * Return asset (make available)
-     * 
-     * @param int $id
-     * @return array|false
      */
     public static function returnAsset($id) {
         try {

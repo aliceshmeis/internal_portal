@@ -191,10 +191,7 @@ function viewTicket(id) {
     window.location.href = `view.php?id=${id}`;
 }
 
-// Create ticket modal (placeholder)
-function openCreateModal() {
-    alert('Create Ticket modal will be implemented next!');
-}
+
 
 // Format date
 function formatDate(dateString) {
