@@ -1,8 +1,8 @@
 <?php
-session_start();
+session_start();//lets you save logindata in session
 
 require_once __DIR__ . '/../../../config/google.php';
-require_once __DIR__ . '/../../../config/database.php';
+require_once __DIR__ . '/../../../config/database.php';connects to my sql
 
 // Get authorization code
 if (!isset($_GET['code'])) {
@@ -22,27 +22,27 @@ try {
         'redirect_uri' => GOOGLE_REDIRECT_URI,
         'grant_type' => 'authorization_code'
     ];
-    
+    //this sends a post request to google token endpoint
     $ch = curl_init(GOOGLE_TOKEN_URL);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($token_params));
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // For localhost
-    $token_response = curl_exec($ch);
+    $token_response = curl_exec($ch);//The response is JSON text stored in $token_response.
     
-    if (curl_errno($ch)) {
+    if (curl_errno($ch)) {//if my connection to google failed 
         throw new Exception('Curl error: ' . curl_error($ch));
     }
     
     curl_close($ch);
     
-    $token_data = json_decode($token_response, true);
+    $token_data = json_decode($token_response, true);//convert it to json 
     
-    if (!isset($token_data['access_token'])) {
+    if (!isset($token_data['access_token'])) {//if no access token 
         throw new Exception('Failed to get access token: ' . ($token_data['error_description'] ?? 'Unknown error'));
     }
     
-    $access_token = $token_data['access_token'];
+    $access_token = $token_data['access_token'];//now we have a token that requests user data 
     
     // Get user info from Google
     $ch = curl_init(GOOGLE_USERINFO_URL);
@@ -51,7 +51,7 @@ try {
         'Authorization: Bearer ' . $access_token
     ]);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // For localhost
-    $userinfo_response = curl_exec($ch);
+    $userinfo_response = curl_exec($ch);//give me user info, stored here
     
     if (curl_errno($ch)) {
         throw new Exception('Curl error getting user info: ' . curl_error($ch));
@@ -59,7 +59,7 @@ try {
     
     curl_close($ch);
     
-    $google_user = json_decode($userinfo_response, true);
+    $google_user = json_decode($userinfo_response, true);//google returns users data!
     
     if (!isset($google_user['id']) || !isset($google_user['email'])) {
         throw new Exception('Failed to get user info from Google');
@@ -75,8 +75,8 @@ try {
     
     // Step 1: Try to find user by google_id
     $query = "SELECT * FROM users WHERE google_id = :google_id";
-    $stmt = $db->prepare($query);
-    $stmt->bindParam(':google_id', $google_id);
+    $stmt = $db->prepare($query);//gets this query ready 
+    $stmt->bindParam(':google_id', $google_id);//putting real value 
     $stmt->execute();
     
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
