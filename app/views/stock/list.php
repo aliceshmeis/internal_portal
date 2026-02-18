@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_name = $_SESSION['name'];
 $user_role = $_SESSION['role'];
-$is_admin = ($user_role === 'Admin');
+$is_admin  = ($user_role === 'Admin');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -25,7 +25,6 @@ $is_admin = ($user_role === 'Admin');
     <div class="mobile-overlay" id="mobileOverlay"></div>
 
     <div class="page-wrapper">
-        <!-- Professional Sidebar with Clean Icons -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-logo">LIU</div>
@@ -84,9 +83,7 @@ $is_admin = ($user_role === 'Admin');
             </div>
         </aside>
 
-        <!-- Main Content -->
         <main class="main-content">
-            <!-- Topbar -->
             <div class="topbar">
                 <div class="topbar-left">
                     <button class="hamburger-menu" id="hamburgerMenu">☰</button>
@@ -102,7 +99,9 @@ $is_admin = ($user_role === 'Admin');
                 </div>
                 
                 <div class="topbar-right">
+                    <?php if ($is_admin): ?>
                     <button class="btn btn-primary" onclick="openAddStockModal()">+ Add Item</button>
+                    <?php endif; ?>
                     <button class="topbar-icon-btn" title="Notifications">
                         🔔
                         <span class="badge">3</span>
@@ -119,22 +118,16 @@ $is_admin = ($user_role === 'Admin');
                 </div>
             </div>
 
-            <!-- Page Content -->
             <div class="page-content">
                 <div class="page-header">
                     <h1 class="page-title">Stock Inventory</h1>
                     <p class="page-subtitle">Monitor and manage stock levels</p>
                 </div>
 
-                <!-- Alert Banner (shown when low stock) -->
                 <div id="alert-banner" style="display: none;"></div>
 
-                <!-- Stats Row -->
-                <div class="stats-row" id="stats-row">
-                    <!-- Populated by JavaScript -->
-                </div>
+                <div class="stats-row" id="stats-row"></div>
 
-                <!-- Filters -->
                 <div class="filters-bar">
                     <div class="filters-row">
                         <div class="filter-group">
@@ -143,14 +136,12 @@ $is_admin = ($user_role === 'Admin');
                                 <input type="text" class="search-input" id="search" placeholder="Search by name or SKU...">
                             </div>
                         </div>
-                        
                         <div class="filter-group">
                             <label class="filter-label">Category</label>
                             <select class="filter-select" id="category-filter">
                                 <option value="">All Categories</option>
                             </select>
                         </div>
-                        
                         <div class="filter-group">
                             <label class="filter-label">Low Stock</label>
                             <label class="filter-toggle" id="low-stock-toggle">
@@ -158,12 +149,10 @@ $is_admin = ($user_role === 'Admin');
                                 <span class="filter-toggle-label">Show Low Stock Only</span>
                             </label>
                         </div>
-                        
                         <button class="btn-filter" onclick="applyFilters()">Apply</button>
                     </div>
                 </div>
 
-                <!-- Stock Table -->
                 <div class="table-card">
                     <div id="loading">
                         <div class="loading-state">
@@ -171,9 +160,7 @@ $is_admin = ($user_role === 'Admin');
                             <p>Loading stock items...</p>
                         </div>
                     </div>
-                    
                     <div id="error" style="display: none; padding: 24px; text-align: center; color: var(--color-danger);"></div>
-                    
                     <div id="stock-container" style="display: none;">
                         <div class="table-wrapper">
                             <table class="stock-table">
@@ -191,13 +178,11 @@ $is_admin = ($user_role === 'Admin');
                                 <tbody id="stock-tbody"></tbody>
                             </table>
                         </div>
-                        
                         <div class="pagination-wrapper">
                             <div class="pagination-info" id="pagination-info"></div>
                             <div class="pagination-controls" id="pagination-controls"></div>
                         </div>
                     </div>
-                    
                     <div id="empty-state" style="display: none;">
                         <div class="empty-state">
                             <div class="empty-icon">📋</div>
@@ -208,6 +193,93 @@ $is_admin = ($user_role === 'Admin');
                 </div>
             </div>
         </main>
+    </div>
+
+    <!-- ── ADD STOCK MODAL ─────────────────────────────── -->
+    <div class="modal-overlay" id="addStockModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Add Stock Item</h3>
+                <button class="modal-close" onclick="closeAddStockModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="addStockForm" onsubmit="return false;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Item Name <span class="required">*</span></label>
+                            <input type="text" id="addName" class="form-control" placeholder="e.g. A4 Paper Ream">
+                        </div>
+                        <div class="form-group">
+                            <label>Category</label>
+                            <input type="text" id="addCategory" class="form-control" placeholder="e.g. Stationery">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>SKU</label>
+                            <input type="text" id="addSku" class="form-control" placeholder="e.g. STK-001">
+                        </div>
+                        <div class="form-group">
+                            <label>Unit</label>
+                            <input type="text" id="addUnit" class="form-control" placeholder="e.g. units, boxes, reams">
+                        </div>
+                    </div>
+                    <div class="form-group">
+    <label>Campus <span class="required">*</span></label>
+    <select id="addCampus" class="form-control">
+        <option value="">Select campus...</option>
+    </select>
+</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Quantity <span class="required">*</span></label>
+                            <input type="number" id="addQuantity" class="form-control" placeholder="0" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Min Threshold</label>
+                            <input type="number" id="addThreshold" class="form-control" placeholder="10" min="0" value="10">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Unit Cost ($)</label>
+                        <input type="number" id="addUnitCost" class="form-control" placeholder="0.00" min="0" step="0.01">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeAddStockModal()">Cancel</button>
+                <button class="btn-primary" id="addStockBtn" onclick="submitAddStock()">Add Item</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── ADJUST STOCK MODAL ──────────────────────────── -->
+    <div class="modal-overlay" id="adjustStockModal">
+        <div class="modal-box modal-box-sm">
+            <div class="modal-header">
+                <h3>Adjust Stock</h3>
+                <button class="modal-close" onclick="closeAdjustModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="adjustStockId">
+                <div class="adjust-item-info">
+                    <div class="adjust-item-name" id="adjustItemName"></div>
+                    <div class="adjust-current-qty">Current: <strong id="adjustCurrentQty"></strong></div>
+                </div>
+                <div class="form-group">
+                    <label>New Quantity <span class="required">*</span></label>
+                    <input type="number" id="adjustQuantity" class="form-control" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Min Threshold</label>
+                    <input type="number" id="adjustThreshold" class="form-control" min="0">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeAdjustModal()">Cancel</button>
+                <button class="btn-primary" id="adjustStockBtn" onclick="submitAdjustStock()">Save Changes</button>
+            </div>
+        </div>
     </div>
 
     <script src="/internal_portal/public/js/mobile-menu.js"></script>

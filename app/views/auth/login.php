@@ -13,7 +13,7 @@ session_start();
 <body>
     <div class="auth-container">
         <div class="logo">
-            <div class="logo-icon">IP</div>
+            <img src="/internal_portal/public/images/liulogo.png" alt="LIU Logo" style="width: 80px; height: 80px; display: block; margin: 0 auto 16px;">
             <h1>Internal Portal</h1>
             <p>Ticketing & Assets Management</p>
         </div>

@@ -26,6 +26,8 @@ $user_role = $_SESSION['role'];
     <link rel="stylesheet" href="/internal_portal/public/css/users.css">
     <link rel="stylesheet" href="/internal_portal/public/css/add-user-modal.css">
 </head>
+
+
 <body>
     <div class="mobile-overlay" id="mobileOverlay"></div>
 
@@ -192,5 +194,82 @@ $user_role = $_SESSION['role'];
     <script src="/internal_portal/public/js/mobile-menu.js"></script>
     <script src="/internal_portal/public/js/users.js"></script>
     <script src="/internal_portal/public/js/add-user-modal.js"></script>
+
+    <!-- ── EDIT USER MODAL ─────────────────────── -->
+<div class="modal-overlay" id="editUserModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Edit User</h3>
+            <button class="modal-close" onclick="closeEditModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="editUserId">
+
+            <div class="form-group">
+                <label>Full Name <span class="required">*</span></label>
+                <input type="text" id="editName" class="form-control" placeholder="Full name">
+            </div>
+            <div class="form-group">
+                <label>Email <span class="required">*</span></label>
+                <input type="email" id="editEmail" class="form-control" placeholder="Email">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Role <span class="required">*</span></label>
+                    <select id="editRole" class="form-control">
+                        <option value="Admin">Admin</option>
+                        <option value="Staff">Staff</option>
+                        <option value="Asset Manager">Asset Manager</option>
+                        <option value="Viewer">Viewer</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="editStatus" class="form-control">
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Campus</label>
+                <select id="editCampus" class="form-control" onchange="loadEditDepartments(this.value)">
+                    <option value="">Select campus...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Department</label>
+                <select id="editDepartment" class="form-control">
+                    <option value="">Select campus first...</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+            <button class="btn-primary" id="saveEditBtn" onclick="saveEditUser()">Save Changes</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── DELETE CONFIRM MODAL ───────────────── -->
+<div class="modal-overlay" id="deleteUserModal">
+    <div class="modal-box modal-box-sm">
+        <div class="modal-header modal-header-danger">
+            <h3>Delete User</h3>
+            <button class="modal-close" onclick="closeDeleteModal()">✕</button>
+        </div>
+        <div class="modal-body modal-body-center">
+            <div class="delete-icon">🗑️</div>
+            <p>Are you sure you want to delete</p>
+            <strong id="deleteUserName"></strong>
+            <p class="delete-email" id="deleteUserEmail"></p>
+            <p class="delete-warning">This action cannot be undone.</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+            <button class="btn-danger" id="confirmDeleteBtn">Yes, Delete</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>

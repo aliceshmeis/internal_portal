@@ -5,9 +5,9 @@
 
 /* === CSS VARIABLES === */
 :root {
-    --color-primary: #3b82f6;
-    --color-primary-hover: #2563eb;
-    --color-primary-active: #1d4ed8;
+   --color-primary: #001f5b;
+--color-primary-hover: #002d80;
+--color-primary-active: #001540;
     --color-text-primary: #111827;
     --color-text-secondary: #6b7280;
     --color-text-tertiary: #9ca3af;

@@ -9,7 +9,7 @@ require_once __DIR__ . '/../../../core/Model.php';
 require_once __DIR__ . '/../../../core/Auth.php';
 require_once __DIR__ . '/../../../core/Response.php';
 require_once __DIR__ . '/../../../core/Request.php';
-require_once __DIR__ . '/../../../app/Controllers/StockController.php';
+require_once __DIR__ . '/../../../app/Controllers/UserController.php';
 
-$controller = new StockController();
-echo $controller->create();
+$controller = new UserController();
+echo $controller->deleteUser();

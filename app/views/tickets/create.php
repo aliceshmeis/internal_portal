@@ -56,7 +56,7 @@ $title_suggestion = $category ? "$category – " : '';
             <nav class="sidebar-nav">
                 <div class="sidebar-nav-section">
                     <div class="sidebar-nav-section-title">Main</div>
-                    <a href="staff-dashboard.php" class="sidebar-nav-item">
+                    <a href="../dashboard/staff-dashboard.php" class="sidebar-nav-item">
                         <span class="sidebar-nav-icon icon-dashboard"></span>
                         <span class="sidebar-nav-text">Dashboard</span>
                     </a>
@@ -87,7 +87,7 @@ $title_suggestion = $category ? "$category – " : '';
                 <div class="topbar-left">
                     <button class="hamburger-menu" id="hamburgerMenu">☰</button>
                     <div class="breadcrumb">
-                        <a href="staff-dashboard.php" class="breadcrumb-item">Home</a>
+                        <a href="../dashboard/staff-dashboard.php" class="breadcrumb-item">Home</a>
                         <span class="breadcrumb-separator">/</span>
                         <a href="../tickets/my-tickets.php" class="breadcrumb-item">My Tickets</a>
                         <span class="breadcrumb-separator">/</span>
@@ -111,7 +111,7 @@ $title_suggestion = $category ? "$category – " : '';
 
                     <!-- Page Header -->
                     <div class="ct-header">
-                        <a href="staff-dashboard.php" class="ct-back">
+                        <a href="../dashboard/staff-dashboard.php" class="ct-back">
                             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M19 12H5M12 5l-7 7 7 7"/>
                             </svg>
@@ -324,7 +324,7 @@ $title_suggestion = $category ? "$category – " : '';
 
                     <!-- Submit -->
                     <div class="ct-footer">
-                        <a href="staff-dashboard.php" class="ct-btn-cancel">Cancel</a>
+                        <a href="../dashboard/staff-dashboard.php" class="ct-btn-cancel">Cancel</a>
                         <button class="ct-btn-submit" id="submitBtn" onclick="submitTicket()">
                             <span id="submitText">Submit Ticket</span>
                             <span id="submitLoader" style="display:none;">Submitting...</span>

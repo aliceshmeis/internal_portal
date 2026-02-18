@@ -65,10 +65,18 @@ function injectAddUserModal() {
                     </div>
                     <div class="aum-field">
                         <label class="aum-label">Campus <span class="aum-required">*</span></label>
-                        <select class="aum-select" id="aumCampus">
-                            <option value="">Select campus...</option>
+                        <select class="aum-select" id="aumCampus" onchange="loadDepartments(this.value)">
+                            <option value="">Loading campuses...</option>
                         </select>
                     </div>
+                </div>
+
+                <!-- Department -->
+                <div class="aum-field">
+                    <label class="aum-label">Department</label>
+                    <select class="aum-select" id="aumDepartment" disabled>
+                        <option value="">Select campus first...</option>
+                    </select>
                 </div>
 
                 <!-- Status -->
@@ -123,9 +131,12 @@ async function loadCampuses() {
         const response = await fetch('/internal_portal/api/v1/campuses/list.php', {
             credentials: 'include'
         });
+
         const data = await response.json();
         const select = document.getElementById('aumCampus');
         if (!select) return;
+
+        select.innerHTML = '<option value="">Select campus...</option>';
 
         if (data.success && data.data?.length > 0) {
             data.data.forEach(campus => {
@@ -135,24 +146,54 @@ async function loadCampuses() {
                 select.appendChild(opt);
             });
         } else {
-            // Fallback hardcoded campuses if API not available
-            [{ id: 1, name: 'Beirut Campus' }, { id: 2, name: 'Tripoli Campus' }].forEach(c => {
-                const opt = document.createElement('option');
-                opt.value = c.id;
-                opt.textContent = c.name;
-                select.appendChild(opt);
-            });
+            showAumError('Failed to load campuses. Please close and reopen the modal.');
         }
     } catch (err) {
-        // Fallback if campuses API doesn't exist yet
+        console.error('Campus load error:', err);
         const select = document.getElementById('aumCampus');
-        if (!select) return;
-        [{ id: 1, name: 'Beirut Campus' }, { id: 2, name: 'Tripoli Campus' }].forEach(c => {
-            const opt = document.createElement('option');
-            opt.value = c.id;
-            opt.textContent = c.name;
-            select.appendChild(opt);
+        if (select) select.innerHTML = '<option value="">Failed to load campuses</option>';
+        showAumError('Failed to load campuses. Please refresh the page.');
+    }
+}
+
+// Load departments based on selected campus
+async function loadDepartments(campusId) {
+    const select = document.getElementById('aumDepartment');
+    if (!select) return;
+
+    if (!campusId) {
+        select.innerHTML = '<option value="">Select campus first...</option>';
+        select.disabled = true;
+        return;
+    }
+
+    select.innerHTML = '<option value="">Loading departments...</option>';
+    select.disabled = true;
+
+    try {
+        const response = await fetch(`/internal_portal/api/v1/departments/list.php?campus_id=${campusId}`, {
+            credentials: 'include'
         });
+
+        const data = await response.json();
+        select.innerHTML = '<option value="">Select department (optional)...</option>';
+
+        if (data.success && data.data?.length > 0) {
+            data.data.forEach(dept => {
+                const opt = document.createElement('option');
+                opt.value = dept.id;
+                opt.textContent =  dept.name;
+                select.appendChild(opt);
+            });
+            select.disabled = false;
+        } else {
+            select.innerHTML = '<option value="">No departments found</option>';
+            select.disabled = true;
+        }
+    } catch (err) {
+        console.error('Department load error:', err);
+        select.innerHTML = '<option value="">Failed to load departments</option>';
+        select.disabled = true;
     }
 }
 
@@ -163,23 +204,32 @@ function toggleAumPassword() {
 
 // Submit → POST /api/v1/users/create.php
 async function submitAddUser() {
-    const name     = document.getElementById('aumName').value.trim();
-    const email    = document.getElementById('aumEmail').value.trim();
-    const password = document.getElementById('aumPassword').value;
-    const role     = document.getElementById('aumRole').value;
-    const campus   = document.getElementById('aumCampus').value;
-    const status   = document.querySelector('input[name="aumStatus"]:checked')?.value ?? '1';
+    const name       = document.getElementById('aumName').value.trim();
+    const email      = document.getElementById('aumEmail').value.trim();
+    const password   = document.getElementById('aumPassword').value;
+    const role       = document.getElementById('aumRole').value;
+    const campus     = document.getElementById('aumCampus').value;
+    const department = document.getElementById('aumDepartment').value;
+    const status     = document.querySelector('input[name="aumStatus"]:checked')?.value ?? '1';
 
     // Validate
-    if (!name)              { showAumError('Full name is required.');        document.getElementById('aumName').focus();     return; }
-    if (!email)             { showAumError('Email address is required.');    document.getElementById('aumEmail').focus();    return; }
-    if (!isValidEmail(email)) { showAumError('Please enter a valid email.'); document.getElementById('aumEmail').focus();   return; }
-    if (!password)          { showAumError('Password is required.');         document.getElementById('aumPassword').focus(); return; }
-    if (password.length < 8){ showAumError('Password must be at least 8 characters.'); return; }
-    if (!role)              { showAumError('Please select a role.');          document.getElementById('aumRole').focus();    return; }
-    if (!campus)            { showAumError('Please select a campus.');        document.getElementById('aumCampus').focus();  return; }
+    if (!name)                { showAumError('Full name is required.');                    document.getElementById('aumName').focus();     return; }
+    if (!email)               { showAumError('Email address is required.');                document.getElementById('aumEmail').focus();    return; }
+    if (!isValidEmail(email)) { showAumError('Please enter a valid email.');               document.getElementById('aumEmail').focus();    return; }
+    if (!password)            { showAumError('Password is required.');                     document.getElementById('aumPassword').focus(); return; }
+    if (password.length < 8)  { showAumError('Password must be at least 8 characters.');                                                  return; }
+    if (!role)                { showAumError('Please select a role.');                     document.getElementById('aumRole').focus();     return; }
+    if (!campus)              { showAumError('Please select a campus.');                   document.getElementById('aumCampus').focus();   return; }
 
-    const body = { name, email, password, role, campus_id: parseInt(campus), is_active: parseInt(status) };
+    const body = {
+        name,
+        email,
+        password,
+        role,
+        campus_id:     parseInt(campus),
+        department_id: department ? parseInt(department) : null,
+        is_active:     parseInt(status)
+    };
 
     setAumLoading(true);
     hideAumError();
@@ -215,10 +265,13 @@ function resetAumForm() {
         const el = document.getElementById(id);
         if (el) el.value = '';
     });
-    document.getElementById('aumRole').value   = '';
+    document.getElementById('aumRole').value = '';
     document.getElementById('aumCampus').value = '';
+    document.getElementById('aumDepartment').innerHTML = '<option value="">Select campus first...</option>';
+    document.getElementById('aumDepartment').disabled = true;
     document.querySelector('input[name="aumStatus"][value="1"]').checked = true;
     hideAumError();
+    loadCampuses();
 }
 
 function isValidEmail(email) {
@@ -236,9 +289,9 @@ function hideAumError() {
 }
 
 function setAumLoading(loading) {
-    document.getElementById('aumSubmitBtn').disabled          = loading;
-    document.getElementById('aumSubmitText').style.display    = loading ? 'none'   : 'inline';
-    document.getElementById('aumSubmitLoader').style.display  = loading ? 'inline' : 'none';
+    document.getElementById('aumSubmitBtn').disabled         = loading;
+    document.getElementById('aumSubmitText').style.display   = loading ? 'none'   : 'inline';
+    document.getElementById('aumSubmitLoader').style.display = loading ? 'inline' : 'none';
 }
 
 function showAumToast(message) {

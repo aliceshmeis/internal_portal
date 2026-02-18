@@ -6,7 +6,7 @@ let filteredTickets = [];
 let currentPage = 1;
 const itemsPerPage = 10;
 
-// Load tickets on page load
+// When the HTML page finishes loading,
 document.addEventListener('DOMContentLoaded', () => {
     loadTickets();
     setupSearchDebounce();
@@ -18,7 +18,7 @@ async function loadTickets() {
     try {
         const response = await fetch(`${API_BASE}/tickets/list.php`, {
             method: 'GET',
-            credentials: 'include'
+            credentials: 'include'//sends the session cookie so the API knows who is logged in.
         });
         
         const result = await response.json();
@@ -48,7 +48,7 @@ function displayTickets() {
     const tbody = document.getElementById('tickets-tbody');
     
     loading.style.display = 'none';
-    
+    //if no tickets after filtering
     if (filteredTickets.length === 0) {
         container.style.display = 'none';
         emptyState.style.display = 'block';

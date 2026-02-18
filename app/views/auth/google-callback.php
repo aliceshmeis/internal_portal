@@ -104,25 +104,9 @@ try {
     
     // Step 3: If still no user, create new account
     if (!$user) {
-        $insert_query = "INSERT INTO users 
-                         (google_id, email, name, campus_id, role, login_method, is_active, email_verified, created_at) 
-                         VALUES 
-                         (:google_id, :email, :name, 1, 'Staff', 'google', 1, 1, NOW())";
-        
-        $insert_stmt = $db->prepare($insert_query);
-        $insert_stmt->bindParam(':google_id', $google_id);
-        $insert_stmt->bindParam(':email', $email);
-        $insert_stmt->bindParam(':name', $name);
-        $insert_stmt->execute();
-        
-        $user_id = $db->lastInsertId();
-        
-        // Get the newly created user
-        $user_query = "SELECT * FROM users WHERE id = :id";
-        $user_stmt = $db->prepare($user_query);
-        $user_stmt->bindParam(':id', $user_id);
-        $user_stmt->execute();
-        $user = $user_stmt->fetch(PDO::FETCH_ASSOC);
+    $_SESSION['error'] = 'Access denied. Your account is not registered in the portal. Please contact your administrator.';
+    header('Location: login.php');
+    exit;
     } else {
         // Update last login for existing user
         $update_query = "UPDATE users SET last_login = NOW() WHERE id = :id";

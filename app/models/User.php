@@ -5,10 +5,6 @@
 
 class User extends Model {
     protected $table = 'users';
-    
-    // =============================================
-    // EXISTING METHODS (unchanged)
-    // =============================================
 
     /**
      * Find user by Google ID
@@ -20,7 +16,7 @@ class User extends Model {
         $stmt->execute();
         return $stmt->fetch();
     }
-    
+
     /**
      * Find user by email
      */
@@ -31,7 +27,7 @@ class User extends Model {
         $stmt->execute();
         return $stmt->fetch();
     }
-    
+
     /**
      * Create new user from Google data
      */
@@ -40,28 +36,28 @@ class User extends Model {
                   (google_id, email, name, profile_picture, role, campus_id, is_active) 
                   VALUES 
                   (:google_id, :email, :name, :profile_picture, :role, :campus_id, :is_active)";
-        
+
         $stmt = $this->db->prepare($query);
-        
+
         $defaultRole     = ROLE_STAFF;
         $defaultCampusId = 1;
         $isActive        = 1;
-        
-        $stmt->bindParam(':google_id',        $googleData['id']);
-        $stmt->bindParam(':email',            $googleData['email']);
-        $stmt->bindParam(':name',             $googleData['name']);
-        $stmt->bindParam(':profile_picture',  $googleData['picture']);
-        $stmt->bindParam(':role',             $defaultRole);
-        $stmt->bindParam(':campus_id',        $defaultCampusId);
-        $stmt->bindParam(':is_active',        $isActive);
-        
+
+        $stmt->bindParam(':google_id',       $googleData['id']);
+        $stmt->bindParam(':email',           $googleData['email']);
+        $stmt->bindParam(':name',            $googleData['name']);
+        $stmt->bindParam(':profile_picture', $googleData['picture']);
+        $stmt->bindParam(':role',            $defaultRole);
+        $stmt->bindParam(':campus_id',       $defaultCampusId);
+        $stmt->bindParam(':is_active',       $isActive);
+
         if ($stmt->execute()) {
             return $this->db->lastInsertId();
         }
-        
+
         return false;
     }
-    
+
     /**
      * Update last login time
      */
@@ -71,10 +67,6 @@ class User extends Model {
         $stmt->bindParam(':id', $userId);
         return $stmt->execute();
     }
-
-    // =============================================
-    // NEW METHODS (for admin user management)
-    // =============================================
 
     /**
      * Get all users with campus name
@@ -112,9 +104,9 @@ class User extends Model {
      */
     public function createUser($data) {
         $query = "INSERT INTO " . $this->table . "
-                    (name, email, password, role, campus_id, is_active, login_method, created_at)
+                    (name, email, password, role, campus_id, department_id, is_active, login_method, created_at)
                   VALUES
-                    (:name, :email, :password, :role, :campus_id, :is_active, 'email', NOW())";
+                    (:name, :email, :password, :role, :campus_id, :department_id, :is_active, 'email', NOW())";
 
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':name',      $data['name']);
@@ -124,12 +116,46 @@ class User extends Model {
         $stmt->bindParam(':campus_id', $data['campus_id'], PDO::PARAM_INT);
         $stmt->bindParam(':is_active', $data['is_active'], PDO::PARAM_INT);
 
+        if (is_null($data['department_id'])) {
+            $stmt->bindValue(':department_id', null, PDO::PARAM_NULL);
+        } else {
+            $stmt->bindValue(':department_id', intval($data['department_id']), PDO::PARAM_INT);
+        }
+
         if ($stmt->execute()) {
             return $this->findById($this->db->lastInsertId());
         }
 
         return false;
     }
+
+    public function updateUser($id, $name, $email, $role, $campus_id, $department_id, $status) {
+    $sql = "UPDATE users 
+            SET name = :name, 
+                email = :email, 
+                role = :role, 
+                campus_id = :campus_id, 
+                department_id = :department_id, 
+                status = :status
+            WHERE id = :id";
+
+    $stmt = $this->db->prepare($sql);
+    $stmt->bindValue(':name',          $name,                     PDO::PARAM_STR);
+    $stmt->bindValue(':email',         $email,                    PDO::PARAM_STR);
+    $stmt->bindValue(':role',          $role,                     PDO::PARAM_STR);
+    $stmt->bindValue(':campus_id',     $campus_id,                $campus_id    ? PDO::PARAM_INT : PDO::PARAM_NULL);
+    $stmt->bindValue(':department_id', $department_id,            $department_id ? PDO::PARAM_INT : PDO::PARAM_NULL);
+    $stmt->bindValue(':status',        $status,                   PDO::PARAM_STR);
+    $stmt->bindValue(':id',            $id,                       PDO::PARAM_INT);
+
+    return $stmt->execute();
+}
+
+public function deleteUser($id) {
+    $stmt = $this->db->prepare("DELETE FROM users WHERE id = :id");
+    $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+    return $stmt->execute();
+}
 
     /**
      * Update a user
@@ -139,7 +165,7 @@ class User extends Model {
         $params = [':id' => $id];
 
         foreach ($data as $key => $value) {
-            $fields[]       = "$key = :$key";
+            $fields[]        = "$key = :$key";
             $params[":$key"] = $value;
         }
 

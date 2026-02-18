@@ -93,7 +93,7 @@ class TicketController {
         
         // Get filters
         $filters = [
-            'status' => Request::get('status'),
+            'status' => Request::get('status'),//This reads a value from the URL query string.
             'priority' => Request::get('priority')
         ];
         
