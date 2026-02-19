@@ -191,7 +191,7 @@ function renderAttachments(attachments) {
 
 async function loadComments() {
     try {
-        const res    = await fetch(`${API_BASE}/tickets/comments.php?ticket_id=${TICKET_ID}`, { credentials: 'include' });
+        const res    = await fetch(`${API_BASE}/tickets/comments/list.php?ticket_id=${TICKET_ID}`, { credentials: 'include' });
         const result = await res.json();
         if (result.success) renderTimeline(result.data || []);
     } catch (e) {
@@ -234,7 +234,7 @@ async function addComment() {
     btn.disabled = true; btn.textContent = 'Posting...';
 
     try {
-        const res  = await fetch(`${API_BASE}/tickets/comment.php`, {
+        const res  = await fetch(`${API_BASE}/tickets/comments/create.php`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
