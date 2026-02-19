@@ -129,27 +129,7 @@ class User extends Model {
         return false;
     }
 
-    public function updateUser($id, $name, $email, $role, $campus_id, $department_id, $status) {
-    $sql = "UPDATE users 
-            SET name = :name, 
-                email = :email, 
-                role = :role, 
-                campus_id = :campus_id, 
-                department_id = :department_id, 
-                status = :status
-            WHERE id = :id";
-
-    $stmt = $this->db->prepare($sql);
-    $stmt->bindValue(':name',          $name,                     PDO::PARAM_STR);
-    $stmt->bindValue(':email',         $email,                    PDO::PARAM_STR);
-    $stmt->bindValue(':role',          $role,                     PDO::PARAM_STR);
-    $stmt->bindValue(':campus_id',     $campus_id,                $campus_id    ? PDO::PARAM_INT : PDO::PARAM_NULL);
-    $stmt->bindValue(':department_id', $department_id,            $department_id ? PDO::PARAM_INT : PDO::PARAM_NULL);
-    $stmt->bindValue(':status',        $status,                   PDO::PARAM_STR);
-    $stmt->bindValue(':id',            $id,                       PDO::PARAM_INT);
-
-    return $stmt->execute();
-}
+   
 
 public function deleteUser($id) {
     $stmt = $this->db->prepare("DELETE FROM users WHERE id = :id");
@@ -184,11 +164,6 @@ public function deleteUser($id) {
     /**
      * Delete a user
      */
-    public function deleteUser($id) {
-        $query = "DELETE FROM " . $this->table . " WHERE id = :id";
-        $stmt  = $this->db->prepare($query);
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-        return $stmt->execute();
-    }
+    
 }
 ?>

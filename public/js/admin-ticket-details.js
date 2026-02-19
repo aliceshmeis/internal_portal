@@ -78,7 +78,7 @@ function renderTickets() {
 // View ticket details
 function viewTicket(ticketId) {
     // Redirect to ticket details page
-    window.location.href = `/internal_portal/app/views/admin/admin-ticket-details.php?id=${ticketId}`;
+   window.location.href = `/internal_portal/app/views/tickets/detail.php?id=${ticketId}`;
 }
 
 // Apply filters

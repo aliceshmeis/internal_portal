@@ -9,73 +9,50 @@ class TicketController {
     /**
      * Create a new ticket - UPDATED to support assigned_to for Admins
      */
-    public function create() {
-        // Auth check
-        if (!Auth::check()) {
-            return Response::unauthorized();
-        }
-        
-        // Method check
-        if (!Request::isPost()) {
-            return Response::methodNotAllowed('POST');
-        }
-        
-        // Get input
-        $input = Request::json();
-        
-        // Validate
-        $errors = [];
-        if (empty($input['title'])) {
-            $errors[] = 'Title is required';
-        }
-        if (empty($input['description'])) {
-            $errors[] = 'Description is required';
-        }
-        
-        if (!empty($errors)) {
-            return Response::error('Validation failed', 400, $errors);
-        }
-        
-        // Prepare data
-        $data = [
-            'title' => trim($input['title']),
-            'description' => trim($input['description']),
-            'priority' => $input['priority'] ?? 'Medium',
-            'campus_id' => Auth::campusId(),
-            'created_by' => Auth::userId()
-        ];
-        
-        // Validate priority
-        $allowed_priorities = ['Low', 'Medium', 'High', 'Critical'];
-        if (!in_array($data['priority'], $allowed_priorities)) {
-            return Response::error('Invalid priority. Allowed: ' . implode(', ', $allowed_priorities), 400);
-        }
-        
-        // ========================================
-        // Handle assigned_to field (Admin only)
-        // ========================================
-        if (isset($input['assigned_to'])) {
-            if (!Auth::isAdmin()) {
-                return Response::forbidden('Only Admins can assign tickets during creation');
-            }
-            
-            // Validate assigned_to is a number
-            if (!is_numeric($input['assigned_to'])) {
-                return Response::error('assigned_to must be a valid user ID (number)', 400);
-            }
-            
-            $data['assigned_to'] = intval($input['assigned_to']);
-        }
-        
-        // Create ticket
-        $ticket = Ticket::create($data);
-        
-        if ($ticket) {
-            return Response::success('Ticket created successfully', $ticket, 201);
-        } else {
-            return Response::serverError('Failed to create ticket');
-        }
+public function create() {
+    if (!Auth::check())     return Response::unauthorized();
+    if (!Request::isPost()) return Response::methodNotAllowed('POST');
+
+    $input = Request::json();
+
+    // Validate required fields
+    if (empty($input['title']))       return Response::error('Title is required', 400);
+    if (empty($input['description'])) return Response::error('Description is required', 400);
+
+    // Validate priority
+    $allowed_priorities = ['Low', 'Medium', 'High', 'Critical'];
+    $priority = $input['priority'] ?? 'Medium';
+    if (!in_array($priority, $allowed_priorities))
+        return Response::error('Invalid priority. Allowed: ' . implode(', ', $allowed_priorities), 400);
+
+    $data = [
+        'title'       => trim($input['title']),
+        'description' => trim($input['description']),
+        'priority'    => $priority,
+        'campus_id'   => Auth::campusId(),
+        'created_by'  => Auth::userId(),
+        'category'    => $input['category'] ?? null,
+        'building'    => !empty($input['building']) ? trim($input['building']) : null,
+        'floor'       => !empty($input['floor'])    ? trim($input['floor'])    : null,
+        'room'        => !empty($input['room'])      ? trim($input['room'])     : null,
+        'ssid'        => !empty($input['ssid'])      ? trim($input['ssid'])     : null,
+    ];
+
+    // Handle assigned_to (Admin only)
+    if (isset($input['assigned_to'])) {
+        if (!Auth::isAdmin())
+            return Response::forbidden('Only Admins can assign tickets during creation');
+        if (!is_numeric($input['assigned_to']))
+            return Response::error('assigned_to must be a valid user ID', 400);
+        $data['assigned_to'] = intval($input['assigned_to']);
     }
+
+    $ticket = Ticket::create($data);
+
+    if ($ticket) return Response::success('Ticket created successfully', $ticket, 201);
+
+    return Response::serverError('Failed to create ticket');
+}
     
     /**
      * List all tickets

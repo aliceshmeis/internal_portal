@@ -7,7 +7,7 @@
     margin: 0 auto;
 }
 
-/* Header */
+/* ── Header ──────────────────────────────── */
 .ct-back {
     display: inline-flex;
     align-items: center;
@@ -27,10 +27,7 @@
     margin-bottom: 32px;
 }
 
-.ct-category-icon {
-    font-size: 36px;
-    line-height: 1;
-}
+.ct-category-icon { font-size: 36px; line-height: 1; }
 
 .ct-title {
     font-size: 22px;
@@ -45,7 +42,7 @@
     margin: 0;
 }
 
-/* Error / Success */
+/* ── Error / Success ─────────────────────── */
 .ct-error {
     background: #fef2f2;
     border: 1px solid #fecaca;
@@ -66,14 +63,14 @@
     margin-bottom: 20px;
 }
 
-/* Form layout */
+/* ── Form Layout ─────────────────────────── */
 .ct-form-layout {
     display: flex;
     flex-direction: column;
     gap: 20px;
 }
 
-/* Section card */
+/* ── Section Card ────────────────────────── */
 .ct-section {
     background: var(--color-bg-primary);
     border: 1px solid var(--color-border-light);
@@ -109,7 +106,15 @@
     flex-shrink: 0;
 }
 
-/* Fields */
+.ct-section-optional {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--color-text-tertiary);
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+/* ── Fields ──────────────────────────────── */
 .ct-field {
     display: flex;
     flex-direction: column;
@@ -147,14 +152,61 @@
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.ct-textarea { resize: vertical; min-height: 96px; }
+.ct-textarea { resize: vertical; min-height: 110px; }
 
 .ct-hint {
     font-size: 12px;
     color: var(--color-text-tertiary);
 }
 
-/* Priority radio buttons */
+.ct-hint-warning {
+    color: #92400e;
+    background: #fef3c7;
+    padding: 4px 10px;
+    border-radius: 5px;
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 12px;
+}
+
+/* ── Location Row ────────────────────────── */
+.ct-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+}
+
+/* ── Printer Location Box ────────────────── */
+.ct-printer-location { margin-bottom: 4px; }
+
+.ct-location-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    padding: 12px 16px;
+}
+
+.ct-location-icon  { font-size: 20px; }
+
+.ct-location-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #3b82f6;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+.ct-location-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e40af;
+}
+
+/* ── Priority ────────────────────────────── */
 .priority-group {
     display: flex;
     gap: 10px;
@@ -185,7 +237,7 @@
 .priority-option input[type="radio"]:checked + .priority-btn.high     { background: #ea580c; color: white; border-color: #ea580c; }
 .priority-option input[type="radio"]:checked + .priority-btn.critical { background: #dc2626; color: white; border-color: #dc2626; }
 
-/* Radio group (for network connection type) */
+/* ── Radio Group ─────────────────────────── */
 .radio-group {
     display: flex;
     gap: 16px;
@@ -203,7 +255,7 @@
 
 .radio-option input[type="radio"] { accent-color: var(--color-primary); }
 
-/* Checkbox */
+/* ── Checkbox ────────────────────────────── */
 .ct-checkbox-label {
     display: flex;
     align-items: center;
@@ -220,7 +272,94 @@
     flex-shrink: 0;
 }
 
-/* Footer */
+/* ── Drop Zone ───────────────────────────── */
+.ct-dropzone {
+    border: 2px dashed #d1d5db;
+    border-radius: 10px;
+    padding: 32px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #fafafa;
+}
+
+.ct-dropzone:hover,
+.ct-dropzone.drag-over {
+    border-color: var(--color-primary);
+    background: #f0f4ff;
+}
+
+.ct-dropzone-icon  { font-size: 32px; margin-bottom: 10px; }
+
+.ct-dropzone-text {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    margin-bottom: 6px;
+}
+
+.ct-dropzone-browse {
+    color: var(--color-primary);
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.ct-dropzone-hint {
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+}
+
+/* ── File List ───────────────────────────── */
+.ct-file-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.ct-file-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-light);
+    border-radius: 8px;
+}
+
+.ct-file-icon  { font-size: 20px; flex-shrink: 0; }
+
+.ct-file-info  { flex: 1; min-width: 0; }
+
+.ct-file-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ct-file-size {
+    font-size: 11px;
+    color: var(--color-text-tertiary);
+    margin-top: 2px;
+}
+
+.ct-file-remove {
+    background: none;
+    border: none;
+    color: #9ca3af;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 4px;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.ct-file-remove:hover { color: #ef4444; }
+
+/* ── Footer ──────────────────────────────── */
 .ct-footer {
     display: flex;
     justify-content: flex-end;
@@ -257,17 +396,25 @@
     font-weight: 600;
     color: white;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: all 0.2s;
     min-width: 140px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
 }
 
-.ct-btn-submit:hover:not(:disabled) { background: #2563eb; }
+.ct-btn-submit:hover:not(:disabled) {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
 .ct-btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
+/* ── Responsive ──────────────────────────── */
 @media (max-width: 640px) {
-    .ct-title-row { gap: 12px; }
+    .ct-title-row    { gap: 12px; }
     .ct-category-icon { font-size: 28px; }
-    .ct-title { font-size: 18px; }
-    .priority-group { gap: 8px; }
-    .ct-section { padding: 16px; }
+    .ct-title        { font-size: 18px; }
+    .priority-group  { gap: 8px; }
+    .ct-section      { padding: 16px; }
+    .ct-row          { grid-template-columns: 1fr; }
 }

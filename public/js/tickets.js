@@ -187,8 +187,8 @@ function setupFilterListeners() {
 }
 
 // View ticket
-function viewTicket(id) {
-    window.location.href = `view.php?id=${id}`;
+function viewTicket(ticketId) {
+    window.location.href = `/internal_portal/app/views/tickets/detail.php?id=${ticketId}`;
 }
 
 

@@ -15,22 +15,42 @@ $user_name  = $_SESSION['name'];
 $user_role  = $_SESSION['role'];
 $first_name = explode(' ', $user_name)[0];
 
-// Get category from URL
 $category = $_GET['category'] ?? '';
 
-// Category config
 $categories = [
-    'Printer Issue'    => ['icon' => '🖨️', 'subtitle' => 'Please provide details about the printing problem.'],
-    'IT & Software'    => ['icon' => '💻', 'subtitle' => 'Describe the software or system issue you\'re experiencing.'],
-    'Network Problem'  => ['icon' => '🌐', 'subtitle' => 'Tell us about your connectivity or network issue.'],
-    'Hardware Issue'   => ['icon' => '🔧', 'subtitle' => 'Describe the hardware malfunction or damage.'],
-    'Access Request'   => ['icon' => '🔑', 'subtitle' => 'Request access to a system or resource.'],
-    'Item Request'     => ['icon' => '📦', 'subtitle' => 'Request supplies or equipment for your work.'],
+    'Printer Issue'   => ['icon' => '🖨️', 'subtitle' => 'Please provide details about the printing problem.'],
+    'IT & Software'   => ['icon' => '💻', 'subtitle' => 'Describe the software or system issue you\'re experiencing.'],
+    'Network Problem' => ['icon' => '🌐', 'subtitle' => 'Tell us about your connectivity or network issue.'],
+    'Hardware Issue'  => ['icon' => '🔧', 'subtitle' => 'Describe the hardware malfunction or damage.'],
+    'Access Request'  => ['icon' => '🔑', 'subtitle' => 'Request access to a system or resource.'],
+    'Item Request'    => ['icon' => '📦', 'subtitle' => 'Request supplies or equipment for your work.'],
 ];
 
-$cat_info = $categories[$category] ?? ['icon' => '🎫', 'subtitle' => 'Describe your issue in detail.'];
-$page_title = $category ? "Create Ticket – $category" : 'Create Ticket';
-$title_suggestion = $category ? "$category – " : '';
+// Smart description placeholders per category
+$description_placeholders = [
+    'Printer Issue'   => "Please describe:\n• What happened? (e.g. paper jam, not printing)\n• When did it start?\n• Steps you already tried?\n• Is it affecting others?",
+    'IT & Software'   => "Please describe:\n• What happened?\n• When did it start?\n• Steps you already tried?\n• Is it affecting others?",
+    'Network Problem' => "Please describe:\n• What happened? (e.g. no internet, slow connection)\n• When did it start?\n• Which devices are affected?\n• Is it affecting others?",
+    'Hardware Issue'  => "Please describe:\n• What happened to the device?\n• When did it start?\n• Any physical damage?\n• Steps you already tried?",
+    'Access Request'  => "Please describe:\n• What system/resource do you need access to?\n• Why do you need this access?\n• How urgently do you need it?",
+    'Item Request'    => "Please describe:\n• What item(s) do you need?\n• Why do you need them?\n• When do you need them by?",
+];
+
+// Smart default priorities per category
+$default_priorities = [
+    'Printer Issue'   => 'Medium',
+    'IT & Software'   => 'Medium',
+    'Network Problem' => 'High',
+    'Hardware Issue'  => 'Medium',
+    'Access Request'  => 'Low',
+    'Item Request'    => 'Low',
+];
+
+$cat_info            = $categories[$category] ?? ['icon' => '🎫', 'subtitle' => 'Describe your issue in detail.'];
+$desc_placeholder    = $description_placeholders[$category] ?? "Please describe:\n• What happened?\n• When did it start?\n• Steps you already tried?\n• Is it affecting others?";
+$default_priority    = $default_priorities[$category] ?? 'Medium';
+$page_title          = $category ? "Create Ticket – $category" : 'Create Ticket';
+$title_suggestion    = $category ? "$category – " : '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -82,7 +102,6 @@ $title_suggestion = $category ? "$category – " : '';
         </aside>
 
         <main class="main-content">
-            <!-- Topbar -->
             <div class="topbar">
                 <div class="topbar-left">
                     <button class="hamburger-menu" id="hamburgerMenu">☰</button>
@@ -105,7 +124,6 @@ $title_suggestion = $category ? "$category – " : '';
                 </div>
             </div>
 
-            <!-- Page Content -->
             <div class="page-content">
                 <div class="create-ticket-wrapper">
 
@@ -127,12 +145,12 @@ $title_suggestion = $category ? "$category – " : '';
                     </div>
 
                     <!-- Error / Success -->
-                    <div class="ct-error" id="ctError" style="display:none;"></div>
+                    <div class="ct-error"   id="ctError"   style="display:none;"></div>
                     <div class="ct-success" id="ctSuccess" style="display:none;"></div>
 
                     <div class="ct-form-layout">
 
-                        <!-- SECTION 1: Basic Information -->
+                        <!-- ── SECTION 1: Basic Information ───────────────── -->
                         <div class="ct-section">
                             <div class="ct-section-title">
                                 <span class="ct-section-num">1</span>
@@ -149,34 +167,30 @@ $title_suggestion = $category ? "$category – " : '';
 
                             <div class="ct-field">
                                 <label class="ct-label">Description <span class="required">*</span></label>
-                                <textarea class="ct-textarea" id="ticketDescription" rows="4"
-                                    placeholder="Describe the issue in detail. What happened? When did it start? What have you tried?"></textarea>
+                                <textarea class="ct-textarea" id="ticketDescription" rows="5"
+                                    placeholder="<?php echo htmlspecialchars($desc_placeholder); ?>"></textarea>
                             </div>
 
                             <div class="ct-field">
                                 <label class="ct-label">Priority</label>
                                 <div class="priority-group">
+                                    <?php foreach (['Low', 'Medium', 'High', 'Critical'] as $p): ?>
                                     <label class="priority-option">
-                                        <input type="radio" name="priority" value="Low">
-                                        <span class="priority-btn low">Low</span>
+                                        <input type="radio" name="priority" value="<?php echo $p; ?>"
+                                            <?php echo $p === $default_priority ? 'checked' : ''; ?>>
+                                        <span class="priority-btn <?php echo strtolower($p); ?>"><?php echo $p; ?></span>
                                     </label>
-                                    <label class="priority-option">
-                                        <input type="radio" name="priority" value="Medium" checked>
-                                        <span class="priority-btn medium">Medium</span>
-                                    </label>
-                                    <label class="priority-option">
-                                        <input type="radio" name="priority" value="High">
-                                        <span class="priority-btn high">High</span>
-                                    </label>
-                                    <label class="priority-option">
-                                        <input type="radio" name="priority" value="Critical">
-                                        <span class="priority-btn critical">Critical</span>
-                                    </label>
+                                    <?php endforeach; ?>
                                 </div>
+                                <?php if ($category === 'Network Problem'): ?>
+                                <span class="ct-hint ct-hint-warning">⚠️ Network issues are set to High priority by default</span>
+                                <?php elseif ($category === 'Access Request' || $category === 'Item Request'): ?>
+                                <span class="ct-hint">💡 Access & Item requests default to Low priority</span>
+                                <?php endif; ?>
                             </div>
                         </div>
 
-                        <!-- SECTION 2: Dynamic Fields per Category -->
+                        <!-- ── SECTION 2: Category-Specific Fields ────────── -->
                         <?php if ($category): ?>
                         <div class="ct-section">
                             <div class="ct-section-title">
@@ -186,14 +200,25 @@ $title_suggestion = $category ? "$category – " : '';
 
                             <?php if ($category === 'Printer Issue'): ?>
                                 <div class="ct-field">
-                                    <label class="ct-label">Printer Name / Location</label>
+                                    <label class="ct-label">Select Printer <span class="required">*</span></label>
                                     <select class="ct-select" id="printerName">
-                                        <option value="">Select printer...</option>
+                                        <option value="">Loading printers...</option>
                                     </select>
-                                    <span class="ct-hint">Loading printers from assets...</span>
                                 </div>
+
+                                <!-- Printer location auto-fill -->
+                                <div class="ct-printer-location" id="printerLocationBox" style="display:none;">
+                                    <div class="ct-location-info">
+                                        <span class="ct-location-icon">📍</span>
+                                        <div>
+                                            <div class="ct-location-label">Printer Location</div>
+                                            <div class="ct-location-value" id="printerLocationText">—</div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="ct-field">
-                                    <label class="ct-label">Issue Type</label>
+                                    <label class="ct-label">Issue Type <span class="required">*</span></label>
                                     <select class="ct-select" id="printerIssueType">
                                         <option value="">Select issue type...</option>
                                         <option value="Paper Jam">Paper Jam</option>
@@ -206,7 +231,7 @@ $title_suggestion = $category ? "$category – " : '';
                                 </div>
                                 <div class="ct-field">
                                     <label class="ct-checkbox-label">
-                                        <input type="checkbox" id="printerUrgent">
+                                        <input type="checkbox" id="printerUrgent" onchange="handlePrinterUrgent(this)">
                                         <span>This is urgent – the printer is needed immediately</span>
                                     </label>
                                 </div>
@@ -227,10 +252,6 @@ $title_suggestion = $category ? "$category – " : '';
 
                             <?php elseif ($category === 'Network Problem'): ?>
                                 <div class="ct-field">
-                                    <label class="ct-label">Your Location / Room</label>
-                                    <input type="text" class="ct-input" id="networkLocation" placeholder="e.g. Office 3B, 2nd Floor Meeting Room">
-                                </div>
-                                <div class="ct-field">
                                     <label class="ct-label">Connection Type</label>
                                     <div class="radio-group">
                                         <label class="radio-option">
@@ -247,9 +268,14 @@ $title_suggestion = $category ? "$category – " : '';
                                         </label>
                                     </div>
                                 </div>
+                                <div class="ct-field" id="ssidField">
+                                    <label class="ct-label">WiFi Network Name (SSID)</label>
+                                    <input type="text" class="ct-input" id="networkSsid" placeholder="e.g. LIU-Staff, LIU-Guest">
+                                    <span class="ct-hint">The name of the WiFi network you're trying to connect to</span>
+                                </div>
                                 <div class="ct-field">
                                     <label class="ct-checkbox-label">
-                                        <input type="checkbox" id="affectingOthers">
+                                        <input type="checkbox" id="affectingOthers" onchange="handleAffectingOthers(this)">
                                         <span>This issue is affecting other people too</span>
                                     </label>
                                 </div>
@@ -258,12 +284,12 @@ $title_suggestion = $category ? "$category – " : '';
                                 <div class="ct-field">
                                     <label class="ct-label">Device / Equipment</label>
                                     <select class="ct-select" id="hardwareAsset">
-                                        <option value="">Select your device...</option>
+                                        <option value="">Loading your assigned devices...</option>
                                     </select>
-                                    <span class="ct-hint">Loading your assigned assets...</span>
+                                    <span class="ct-hint" id="hardwareHint">Loading your assigned assets...</span>
                                 </div>
                                 <div class="ct-field">
-                                    <label class="ct-label">Issue Type</label>
+                                    <label class="ct-label">Issue Type <span class="required">*</span></label>
                                     <select class="ct-select" id="hardwareIssueType">
                                         <option value="">Select issue...</option>
                                         <option value="Not turning on">Not turning on</option>
@@ -320,9 +346,55 @@ $title_suggestion = $category ? "$category – " : '';
                         </div>
                         <?php endif; ?>
 
+                        <!-- ── SECTION 3: Location ─────────────────────────── -->
+                        <div class="ct-section">
+                            <div class="ct-section-title">
+                                <span class="ct-section-num"><?php echo $category ? '3' : '2'; ?></span>
+                                Location
+                            </div>
+                            <span class="ct-hint" style="display:block; margin-bottom:14px;">Help us locate the issue faster by providing your exact location.</span>
+
+                            <div class="ct-row">
+                                <div class="ct-field">
+                                    <label class="ct-label">Building / Block</label>
+                                    <input type="text" class="ct-input" id="locationBuilding" placeholder="e.g. Block A, Engineering Building">
+                                </div>
+                                <div class="ct-field">
+                                    <label class="ct-label">Floor</label>
+                                    <input type="text" class="ct-input" id="locationFloor" placeholder="e.g. Ground, 1st, 2nd">
+                                </div>
+                                <div class="ct-field">
+                                    <label class="ct-label">Room / Office</label>
+                                    <input type="text" class="ct-input" id="locationRoom" placeholder="e.g. Room 204, Lab 3">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ── SECTION 4: Attachments ──────────────────────── -->
+                        <div class="ct-section">
+                            <div class="ct-section-title">
+                                <span class="ct-section-num"><?php echo $category ? '4' : '3'; ?></span>
+                                Attachments <span class="ct-section-optional">(optional)</span>
+                            </div>
+                            <span class="ct-hint" style="display:block; margin-bottom:14px;">
+                                Add screenshots, photos, or documents to help us understand the issue.
+                            </span>
+
+                            <!-- Drop Zone -->
+                            <div class="ct-dropzone" id="dropZone">
+                                <div class="ct-dropzone-icon">📎</div>
+                                <div class="ct-dropzone-text">Drag & drop files here, or <span class="ct-dropzone-browse" onclick="document.getElementById('fileInput').click()">browse</span></div>
+                                <div class="ct-dropzone-hint">PNG, JPG, PDF, DOCX — Max 5MB per file</div>
+                                <input type="file" id="fileInput" multiple accept=".png,.jpg,.jpeg,.gif,.pdf,.doc,.docx,.txt" style="display:none;" onchange="handleFileSelect(this.files)">
+                            </div>
+
+                            <!-- File Preview List -->
+                            <div class="ct-file-list" id="fileList"></div>
+                        </div>
+
                     </div>
 
-                    <!-- Submit -->
+                    <!-- Submit Footer -->
                     <div class="ct-footer">
                         <a href="../dashboard/staff-dashboard.php" class="ct-btn-cancel">Cancel</a>
                         <button class="ct-btn-submit" id="submitBtn" onclick="submitTicket()">
@@ -338,7 +410,8 @@ $title_suggestion = $category ? "$category – " : '';
 
     <script src="/internal_portal/public/js/mobile-menu.js"></script>
     <script>
-        const TICKET_CATEGORY = <?php echo json_encode($category); ?>;
+        const TICKET_CATEGORY   = <?php echo json_encode($category); ?>;
+        const DEFAULT_PRIORITY  = <?php echo json_encode($default_priority); ?>;
     </script>
     <script src="/internal_portal/public/js/create-ticket-page.js"></script>
 </body>

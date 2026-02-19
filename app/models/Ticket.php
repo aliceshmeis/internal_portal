@@ -10,39 +10,46 @@ class Ticket {
      * @return array|false
      */
     public static function create($data) {
-        try {
-            $database = new Database();
-            $db = $database->getConnection();
-            
-            // Generate ticket number
-            $ticket_number = 'TKT-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -6));
-            
-            $query = "INSERT INTO tickets 
-                      (ticket_number, campus_id, title, description, status, priority, created_by, assigned_to, created_at) 
-                      VALUES 
-                      (:ticket_number, :campus_id, :title, :description, 'Open', :priority, :created_by, :assigned_to, NOW())";
-            
-            $stmt = $db->prepare($query);
-            $stmt->bindParam(':ticket_number', $ticket_number);
-            $stmt->bindParam(':campus_id', $data['campus_id']);
-            $stmt->bindParam(':title', $data['title']);
-            $stmt->bindParam(':description', $data['description']);
-            $stmt->bindParam(':priority', $data['priority']);
-            $stmt->bindParam(':created_by', $data['created_by']);
-            
-            // Handle assigned_to (can be null)
-            $assigned_to = $data['assigned_to'] ?? null;
-            $stmt->bindParam(':assigned_to', $assigned_to, PDO::PARAM_INT);
-            
-            if ($stmt->execute()) {
-                return self::find($db->lastInsertId());
-            }
-            
-            return false;
-        } catch (Exception $e) {
-            return false;
+    try {
+        $database = new Database();
+        $db       = $database->getConnection();
+
+        $ticket_number = 'TKT-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -6));
+
+        $query = "INSERT INTO tickets
+                    (ticket_number, campus_id, title, description, status, priority,
+                     category, building, floor, room, ssid,
+                     created_by, assigned_to, created_at)
+                  VALUES
+                    (:ticket_number, :campus_id, :title, :description, 'Open', :priority,
+                     :category, :building, :floor, :room, :ssid,
+                     :created_by, :assigned_to, NOW())";
+
+        $stmt = $db->prepare($query);
+        $stmt->bindValue(':ticket_number', $ticket_number);
+        $stmt->bindValue(':campus_id',     $data['campus_id'],   PDO::PARAM_INT);
+        $stmt->bindValue(':title',         $data['title']);
+        $stmt->bindValue(':description',   $data['description']);
+        $stmt->bindValue(':priority',      $data['priority']);
+        $stmt->bindValue(':category',      $data['category']  ?? null);
+        $stmt->bindValue(':building',      $data['building']  ?? null);
+        $stmt->bindValue(':floor',         $data['floor']     ?? null);
+        $stmt->bindValue(':room',          $data['room']      ?? null);
+        $stmt->bindValue(':ssid',          $data['ssid']      ?? null);
+        $stmt->bindValue(':created_by',    $data['created_by'],  PDO::PARAM_INT);
+
+        $assigned_to = $data['assigned_to'] ?? null;
+        $stmt->bindValue(':assigned_to', $assigned_to, $assigned_to ? PDO::PARAM_INT : PDO::PARAM_NULL);
+
+        if ($stmt->execute()) {
+            return self::find($db->lastInsertId());
         }
+
+        return false;
+    } catch (Exception $e) {
+        return false;
     }
+}
     
     /**
      * Find ticket by ID
@@ -51,29 +58,44 @@ class Ticket {
      * @return array|false
      */
     public static function find($id) {
-        try {
-            $database = new Database();
-            $db = $database->getConnection();
-            
-            $query = "SELECT t.*, 
-                      u.name as creator_name, u.email as creator_email,
-                      a.name as assignee_name, a.email as assignee_email,
-                      c.campus_name
-                      FROM tickets t
-                      LEFT JOIN users u ON t.created_by = u.id
-                      LEFT JOIN users a ON t.assigned_to = a.id
-                      LEFT JOIN campuses c ON t.campus_id = c.id
-                      WHERE t.id = :id";
-            
-            $stmt = $db->prepare($query);
-            $stmt->bindParam(':id', $id);
-            $stmt->execute();
-            
-            return $stmt->fetch(PDO::FETCH_ASSOC);
-        } catch (Exception $e) {
-            return false;
-        }
+    try {
+        $database = new Database();
+        $db       = $database->getConnection();
+
+        $query = "SELECT t.*,
+                    u.name  AS creator_name,  u.email  AS creator_email,
+                    a.name  AS assigned_name, a.email  AS assigned_email,
+                    c.campus_name
+                  FROM tickets t
+                  LEFT JOIN users    u ON t.created_by  = u.id
+                  LEFT JOIN users    a ON t.assigned_to = a.id
+                  LEFT JOIN campuses c ON t.campus_id   = c.id
+                  WHERE t.id = :id";
+
+        $stmt = $db->prepare($query);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $ticket = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$ticket) return false;
+
+        // Attach file attachments
+        $attachStmt = $db->prepare("
+            SELECT ta.*, u.name AS uploaded_by_name
+            FROM ticket_attachments ta
+            LEFT JOIN users u ON ta.uploaded_by = u.id
+            WHERE ta.ticket_id = :ticket_id
+            ORDER BY ta.uploaded_at ASC
+        ");
+        $attachStmt->bindValue(':ticket_id', $id, PDO::PARAM_INT);
+        $attachStmt->execute();
+        $ticket['attachments'] = $attachStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return $ticket;
+    } catch (Exception $e) {
+        return false;
     }
+}
     
     /**
      * Get all tickets (Admin view)
