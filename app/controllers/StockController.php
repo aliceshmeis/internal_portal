@@ -29,7 +29,7 @@ class StockController {
             'unit'              => isset($input['unit'])       ? trim($input['unit'])       : 'units',
             'minimum_threshold' => isset($input['minimum_threshold']) ? intval($input['minimum_threshold']) : 10,
             'unit_cost'         => isset($input['unit_cost'])  ? floatval($input['unit_cost']) : 0,
-            'campus_id'         => Auth::campusId()
+            'campus_id' => isset($input['campus_id']) ? intval($input['campus_id']) : Auth::campusId(),
         ];
 
         if ($data['quantity'] < 0) return Response::error('Quantity cannot be negative', 400);

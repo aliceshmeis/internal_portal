@@ -22,6 +22,7 @@ $can_add   = ($user_role === 'Admin' || $user_role === 'Asset Manager');
     <link rel="stylesheet" href="/internal_portal/public/css/tickets.css">
     <link rel="stylesheet" href="/internal_portal/public/css/assets.css">
     <link rel="stylesheet" href="/internal_portal/public/css/create-asset-modal.css">
+    <link rel="stylesheet" href="/internal_portal/public/css/assign-asset-modal.css">
 </head>
 <body>
     <div class="mobile-overlay" id="mobileOverlay"></div>
@@ -29,8 +30,7 @@ $can_add   = ($user_role === 'Admin' || $user_role === 'Asset Manager');
     <div class="page-wrapper">
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <div class="sidebar-logo">LIU</div>
-                <div class="sidebar-title">Internal Portal</div>
+                <img src="/internal_portal/public/images/liulogo.png" alt="LIU" style="height:36px;object-fit:contain;">                <div class="sidebar-title">Internal Portal</div>
             </div>
             <nav class="sidebar-nav">
                 <div class="sidebar-nav-section">
@@ -103,9 +103,7 @@ $can_add   = ($user_role === 'Admin' || $user_role === 'Asset Manager');
                         <span class="badge">3</span>
                     </button>
                     <div class="header-user">
-                        <div class="header-user-avatar">
-                            <?php echo strtoupper(substr($user_name, 0, 1)); ?>
-                        </div>
+                        <div class="header-user-avatar"><?php echo strtoupper(substr($user_name, 0, 1)); ?></div>
                         <div class="header-user-info">
                             <div class="header-user-name"><?php echo htmlspecialchars($user_name); ?></div>
                             <div class="header-user-role"><?php echo htmlspecialchars($user_role); ?></div>
@@ -116,8 +114,8 @@ $can_add   = ($user_role === 'Admin' || $user_role === 'Asset Manager');
 
             <div class="page-content">
                 <div class="page-header">
-                    <h1 style="font-size:24px; font-weight:600; margin-bottom:8px; color:var(--color-text-primary);">Asset Inventory</h1>
-                    <p style="color:var(--color-text-secondary); font-size:14px; margin-bottom:32px;">Track and manage company assets</p>
+                    <h1 style="font-size:24px;font-weight:600;margin-bottom:8px;color:var(--color-text-primary);">Asset Inventory</h1>
+                    <p style="color:var(--color-text-secondary);font-size:14px;margin-bottom:32px;">Track and manage company assets</p>
                 </div>
 
                 <div class="stats-row" id="stats-row"></div>
@@ -162,7 +160,7 @@ $can_add   = ($user_role === 'Admin' || $user_role === 'Asset Manager');
                             <p>Loading assets...</p>
                         </div>
                     </div>
-                    <div id="error" style="display:none; padding:24px; text-align:center; color:var(--color-danger);"></div>
+                    <div id="error" style="display:none;padding:24px;text-align:center;color:var(--color-danger);"></div>
                     <div id="assets-container" style="display:none;">
                         <div class="table-wrapper">
                             <table class="assets-table">
@@ -195,6 +193,70 @@ $can_add   = ($user_role === 'Admin' || $user_role === 'Asset Manager');
                 </div>
             </div>
         </main>
+    </div>
+
+    <!-- ASSIGN ASSET MODAL -->
+    <div id="assignModal">
+        <div class="asset-modal-overlay" onclick="closeAssignModal()"></div>
+        <div class="asset-modal-container">
+            <div class="asset-modal-header">
+                <div>
+                    <h2 class="asset-modal-title">Assign Asset</h2>
+                    <p class="asset-modal-subtitle" id="assignAssetName"></p>
+                </div>
+                <button class="asset-modal-close" type="button" onclick="closeAssignModal()">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="asset-modal-body">
+                <div class="asset-modal-error" id="assignModalError" style="display:none;"></div>
+                <div class="asset-form-group">
+                    <label class="asset-form-label">Assign To <span style="color:#ef4444;">*</span></label>
+                    <select class="asset-form-select" id="assignUserId">
+                        <option value="">Loading staff...</option>
+                    </select>
+                </div>
+                <div class="asset-form-group">
+                    <label class="asset-form-label">Expected Return Date <span class="optional">(optional)</span></label>
+                    <input type="date" class="asset-form-input" id="assignReturnDate">
+                </div>
+            </div>
+            <div class="asset-modal-footer">
+                <button class="btn-asset-cancel" type="button" onclick="closeAssignModal()">Cancel</button>
+                <button class="btn-asset-confirm" type="button" onclick="submitAssign()">Assign Asset</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- RETURN ASSET MODAL -->
+    <div id="returnModal">
+        <div class="asset-modal-overlay" onclick="closeReturnModal()"></div>
+        <div class="asset-modal-container">
+            <div class="asset-modal-header">
+                <div>
+                    <h2 class="asset-modal-title">Return Asset</h2>
+                    <p class="asset-modal-subtitle">Confirm asset return</p>
+                </div>
+                <button class="asset-modal-close" type="button" onclick="closeReturnModal()">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="asset-modal-body">
+                <div class="asset-modal-error" id="returnModalError" style="display:none;"></div>
+                <div class="return-confirm-box">
+                    <strong>Are you sure you want to return this asset?</strong>
+                    "<span id="returnAssetName"></span>" will be marked as Available and unassigned from the current user.
+                </div>
+            </div>
+            <div class="asset-modal-footer">
+                <button class="btn-asset-cancel" type="button" onclick="closeReturnModal()">Cancel</button>
+                <button class="btn-asset-confirm danger" type="button" onclick="submitReturn()">Confirm Return</button>
+            </div>
+        </div>
     </div>
 
     <script src="/internal_portal/public/js/mobile-menu.js"></script>

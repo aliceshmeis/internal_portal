@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_name = $_SESSION['name'];
 $user_role = $_SESSION['role'];
-$is_admin = ($user_role === 'Admin');
+$is_admin  = ($user_role === 'Admin');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -25,11 +25,9 @@ $is_admin = ($user_role === 'Admin');
     <div class="mobile-overlay" id="mobileOverlay"></div>
 
     <div class="page-wrapper">
-        <!-- Professional Sidebar with Clean Icons -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <div class="sidebar-logo">LIU</div>
-                <div class="sidebar-title">Internal Portal</div>
+                <img src="/internal_portal/public/images/liulogo.png" alt="LIU" style="height:36px;object-fit:contain;">                <div class="sidebar-title">Internal Portal</div>
             </div>
             
             <nav class="sidebar-nav">
@@ -84,9 +82,7 @@ $is_admin = ($user_role === 'Admin');
             </div>
         </aside>
 
-        <!-- Main Content -->
         <main class="main-content">
-            <!-- Topbar -->
             <div class="topbar">
                 <div class="topbar-left">
                     <button class="hamburger-menu" id="hamburgerMenu">☰</button>
@@ -104,13 +100,10 @@ $is_admin = ($user_role === 'Admin');
                 <div class="topbar-right">
                     <button class="btn btn-primary" onclick="openCreateModal()">+ New Ticket</button>
                     <button class="topbar-icon-btn" title="Notifications">
-                        
                         <span class="badge">3</span>
                     </button>
                     <div class="header-user">
-                        <div class="header-user-avatar">
-                            <?php echo strtoupper(substr($user_name, 0, 1)); ?>
-                        </div>
+                        <div class="header-user-avatar"><?php echo strtoupper(substr($user_name, 0, 1)); ?></div>
                         <div class="header-user-info">
                             <div class="header-user-name"><?php echo htmlspecialchars($user_name); ?></div>
                             <div class="header-user-role"><?php echo htmlspecialchars($user_role); ?></div>
@@ -119,11 +112,10 @@ $is_admin = ($user_role === 'Admin');
                 </div>
             </div>
 
-            <!-- Page Content -->
             <div class="page-content">
                 <div class="page-header">
-                    <h1 style="font-size: 24px; font-weight: 600; margin-bottom: 8px; color: var(--color-text-primary);">All Tickets</h1>
-                    <p style="color: var(--color-text-secondary); margin-bottom: 32px; font-size: 14px;">Manage and track support requests</p>
+                    <h1 style="font-size:24px;font-weight:600;margin-bottom:8px;color:var(--color-text-primary);">All Tickets</h1>
+                    <p style="color:var(--color-text-secondary);margin-bottom:32px;font-size:14px;">Manage and track support requests</p>
                 </div>
 
                 <!-- Filters -->
@@ -135,7 +127,12 @@ $is_admin = ($user_role === 'Admin');
                                 <input type="text" class="search-input" id="search" placeholder="Search by title or ID...">
                             </div>
                         </div>
-                        
+                        <div class="filter-group">
+                            <label class="filter-label">Campus</label>
+                            <select class="filter-select" id="campus-filter">
+                                <option value="">All Campuses</option>
+                            </select>
+                        </div>
                         <div class="filter-group">
                             <label class="filter-label">Status</label>
                             <select class="filter-select" id="status-filter">
@@ -147,7 +144,6 @@ $is_admin = ($user_role === 'Admin');
                                 <option value="Closed">Closed</option>
                             </select>
                         </div>
-                        
                         <div class="filter-group">
                             <label class="filter-label">Priority</label>
                             <select class="filter-select" id="priority-filter">
@@ -158,7 +154,6 @@ $is_admin = ($user_role === 'Admin');
                                 <option value="Critical">Critical</option>
                             </select>
                         </div>
-                        
                         <button class="btn-filter" onclick="applyFilters()">Apply</button>
                     </div>
                 </div>
@@ -172,33 +167,34 @@ $is_admin = ($user_role === 'Admin');
                         </div>
                     </div>
                     
-                    <div id="error" style="display: none; padding: 24px; text-align: center; color: var(--color-danger);"></div>
+                    <div id="error" style="display:none;padding:24px;text-align:center;color:var(--color-danger);"></div>
                     
-                    <div id="tickets-container" style="display: none;">
+                    <div id="tickets-container" style="display:none;">
                         <div class="table-wrapper">
                             <table class="tickets-table">
                                 <thead>
                                     <tr>
                                         <th>ID</th>
                                         <th>Title</th>
+                                        <th>Campus</th>
+                                        <th>Department</th>
                                         <th>Priority</th>
                                         <th>Status</th>
+                                        <th>Assigned To</th>
                                         <th>Created By</th>
                                         <th>Created</th>
-                                        <th style="text-align: center;">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tickets-tbody"></tbody>
                             </table>
                         </div>
-                        
                         <div class="pagination-wrapper">
                             <div class="pagination-info" id="pagination-info"></div>
                             <div class="pagination-controls" id="pagination-controls"></div>
                         </div>
                     </div>
                     
-                    <div id="empty-state" style="display: none;">
+                    <div id="empty-state" style="display:none;">
                         <div class="empty-state">
                             <div class="empty-icon">🎫</div>
                             <h3 class="empty-title">No tickets found</h3>

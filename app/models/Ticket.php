@@ -104,44 +104,41 @@ class Ticket {
      * @return array
      */
     public static function getAll($filters = []) {
-        try {
-            $database = new Database();
-            $db = $database->getConnection();
-            
-            $query = "SELECT t.*, u.name as creator_name, a.name as assignee_name, c.campus_name
-                      FROM tickets t
-                      LEFT JOIN users u ON t.created_by = u.id
-                      LEFT JOIN users a ON t.assigned_to = a.id
-                      LEFT JOIN campuses c ON t.campus_id = c.id
-                      WHERE 1=1";
-            
-            if (!empty($filters['status'])) {
-                $query .= " AND t.status = :status";
-            }
-            
-            if (!empty($filters['priority'])) {
-                $query .= " AND t.priority = :priority";
-            }
-            
-            $query .= " ORDER BY t.created_at DESC";
-            
-            $stmt = $db->prepare($query);
-            
-            if (!empty($filters['status'])) {
-                $stmt->bindParam(':status', $filters['status']);
-            }
-            
-            if (!empty($filters['priority'])) {
-                $stmt->bindParam(':priority', $filters['priority']);
-            }
-            
-            $stmt->execute();
-            
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (Exception $e) {
-            return [];
-        }
+    try {
+        $database = new Database();
+        $db = $database->getConnection();
+
+        $query = "SELECT t.*,
+                         u.name  AS creator_name,
+                         a.name  AS assignee_name,
+                         c.campus_name,
+                         d.name  AS department_name
+                  FROM tickets t
+                  LEFT JOIN users u       ON t.created_by   = u.id
+                  LEFT JOIN users a       ON t.assigned_to  = a.id
+                  LEFT JOIN campuses c    ON t.campus_id    = c.id
+                  LEFT JOIN departments d ON a.department_id = d.id
+                  WHERE 1=1";
+
+        if (!empty($filters['status']))   $query .= " AND t.status   = :status";
+        if (!empty($filters['priority'])) $query .= " AND t.priority = :priority";
+        if (!empty($filters['campus_id'])) $query .= " AND t.campus_id = :campus_id";
+
+        $query .= " ORDER BY t.created_at DESC";
+
+        $stmt = $db->prepare($query);
+
+        if (!empty($filters['status']))    $stmt->bindParam(':status',    $filters['status']);
+        if (!empty($filters['priority']))  $stmt->bindParam(':priority',  $filters['priority']);
+        if (!empty($filters['campus_id'])) $stmt->bindParam(':campus_id', $filters['campus_id']);
+
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        return [];
     }
+}
     
     /**
      * Get tickets by campus (Staff view)

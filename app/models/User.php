@@ -72,17 +72,23 @@ class User extends Model {
      * Get all users with campus name
      */
     public function getAll() {
-        $query = "SELECT u.id, u.name, u.email, u.role, u.campus_id,
-                         u.is_active, u.login_method, u.last_login, u.created_at,
-                         c.campus_name
-                  FROM " . $this->table . " u
-                  LEFT JOIN campuses c ON u.campus_id = c.id
-                  ORDER BY u.created_at DESC";
+    try {
+        $database = new Database();
+        $db = $database->getConnection();
 
-        $stmt = $this->db->prepare($query);
-        $stmt->execute();
-        return $stmt->fetchAll();
+        $stmt = $db->query("
+            SELECT u.*, c.campus_name, d.name AS department_name
+            FROM users u
+            LEFT JOIN campuses c    ON u.campus_id     = c.id
+            LEFT JOIN departments d ON u.department_id = d.id
+            ORDER BY u.created_at DESC
+        ");
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        return false;
     }
+}
 
     /**
      * Find user by ID (with campus)

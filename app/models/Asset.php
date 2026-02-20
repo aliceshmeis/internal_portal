@@ -6,46 +6,50 @@ class Asset {
     /**
      * Create a new asset
      */
-    public static function create($data) {
-        try {
-            $database = new Database();
-            $db = $database->getConnection();
-            
-            // Generate asset tag
-            $asset_tag = 'AST-' . strtoupper($data['category'][0]) . date('Ymd') . '-' . strtoupper(substr(uniqid(), -6));
-            
-            $query = "INSERT INTO assets 
-                      (asset_tag, campus_id, category, name, description, serial_number, status, 
-                       assigned_to, purchase_date, purchase_cost, warranty_expiry, created_at) 
-                      VALUES 
-                      (:asset_tag, :campus_id, :category, :name, :description, :serial_number, :status,
-                       :assigned_to, :purchase_date, :purchase_cost, :warranty_expiry, NOW())";
-            
-            $stmt = $db->prepare($query);
-            $stmt->bindParam(':asset_tag',       $asset_tag);
-            $stmt->bindParam(':campus_id',       $data['campus_id']);
-            $stmt->bindParam(':category',        $data['category']);
-            $stmt->bindParam(':name',            $data['name']);
-            $stmt->bindParam(':description',     $data['description']);
-            $stmt->bindParam(':serial_number',   $data['serial_number']);
-            $stmt->bindParam(':status',          $data['status']);
-            $stmt->bindParam(':purchase_date',   $data['purchase_date']);
-            $stmt->bindParam(':purchase_cost',   $data['purchase_cost']);
-            $stmt->bindParam(':warranty_expiry', $data['warranty_expiry']);
+   public static function create($data) {
+    try {
+        $database = new Database();
+        $db = $database->getConnection();
+        
+        // Generate asset tag
+        $asset_tag = 'AST-' . strtoupper($data['category'][0]) . date('Ymd') . '-' . strtoupper(substr(uniqid(), -6));
+        
+        $query = "INSERT INTO assets 
+                  (asset_tag, campus_id, category, name, description, serial_number, status,
+                   building, floor, room,
+                   assigned_to, purchase_date, purchase_cost, warranty_expiry, created_at) 
+                  VALUES 
+                  (:asset_tag, :campus_id, :category, :name, :description, :serial_number, :status,
+                   :building, :floor, :room,
+                   :assigned_to, :purchase_date, :purchase_cost, :warranty_expiry, NOW())";
+        
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':asset_tag',       $asset_tag);
+        $stmt->bindParam(':campus_id',       $data['campus_id']);
+        $stmt->bindParam(':category',        $data['category']);
+        $stmt->bindParam(':name',            $data['name']);
+        $stmt->bindParam(':description',     $data['description']);
+        $stmt->bindParam(':serial_number',   $data['serial_number']);
+        $stmt->bindParam(':status',          $data['status']);
+        $stmt->bindParam(':building',        $data['building']);
+        $stmt->bindParam(':floor',           $data['floor']);
+        $stmt->bindParam(':room',            $data['room']);
+        $stmt->bindParam(':purchase_date',   $data['purchase_date']);
+        $stmt->bindParam(':purchase_cost',   $data['purchase_cost']);
+        $stmt->bindParam(':warranty_expiry', $data['warranty_expiry']);
 
-            // assigned_to can be null
-            $assigned_to = $data['assigned_to'] ?? null;
-            $stmt->bindParam(':assigned_to', $assigned_to, PDO::PARAM_INT);
-            
-            if ($stmt->execute()) {
-                return self::find($db->lastInsertId());
-            }
-            
-            return false;
-        } catch (Exception $e) {
-            return false;
+        $assigned_to = $data['assigned_to'] ?? null;
+        $stmt->bindParam(':assigned_to', $assigned_to, PDO::PARAM_INT);
+        
+        if ($stmt->execute()) {
+            return self::find($db->lastInsertId());
         }
+        
+        return false;
+    } catch (Exception $e) {
+        return false;
     }
+}
     
     /**
      * Find asset by ID - with assigned user name

@@ -68,6 +68,17 @@ function injectCreateAssetModal() {
                     <textarea class="form-textarea" id="assetDescription" rows="2" placeholder="Optional description..."></textarea>
                 </div>
 
+                <!-- Location -->
+                <div class="form-group">
+                    <label class="form-label">Location</label>
+                    <div class="form-row-3">
+                        <input type="text" class="form-input" id="assetBuilding" placeholder="Building / Block">
+                        <input type="text" class="form-input" id="assetFloor"    placeholder="Floor">
+                        <input type="text" class="form-input" id="assetRoom"     placeholder="Room No.">
+                    </div>
+                    <span class="form-hint">e.g. Block A · Floor 2 · Room 204</span>
+                </div>
+
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Purchase Date</label>
@@ -98,7 +109,7 @@ function injectCreateAssetModal() {
 
             <div class="modal-footer">
                 <button class="btn-modal-cancel" onclick="closeCreateAssetModal()">Cancel</button>
-                <button class="btn-modal-submit" id="assetSubmitBtn" onclick="submitCreateAsset()">
+                <button class="btn-modal-submit" id="assetSubmitBtn" type="button" onclick="submitCreateAsset()">
                     <span id="assetSubmitText">Add Asset</span>
                     <span id="assetSubmitLoader" style="display:none;">Adding...</span>
                 </button>
@@ -151,6 +162,9 @@ async function submitCreateAsset() {
     const serial         = document.getElementById('assetSerial').value.trim();
     const status         = document.getElementById('assetStatus').value;
     const description    = document.getElementById('assetDescription').value.trim();
+    const building       = document.getElementById('assetBuilding').value.trim();
+    const floor          = document.getElementById('assetFloor').value.trim();
+    const room           = document.getElementById('assetRoom').value.trim();
     const purchaseDate   = document.getElementById('assetPurchaseDate').value;
     const purchaseCost   = document.getElementById('assetPurchaseCost').value;
     const warrantyExpiry = document.getElementById('assetWarrantyExpiry').value;
@@ -162,6 +176,9 @@ async function submitCreateAsset() {
     const body = { name, category, status };
     if (serial)         body.serial_number   = serial;
     if (description)    body.description     = description;
+    if (building)       body.building        = building;
+    if (floor)          body.floor           = floor;
+    if (room)           body.room            = room;
     if (purchaseDate)   body.purchase_date   = purchaseDate;
     if (purchaseCost)   body.purchase_cost   = parseFloat(purchaseCost);
     if (warrantyExpiry) body.warranty_expiry = warrantyExpiry;
@@ -195,7 +212,8 @@ async function submitCreateAsset() {
 }
 
 function resetAssetForm() {
-    ['assetName','assetSerial','assetDescription','assetPurchaseDate','assetPurchaseCost','assetWarrantyExpiry']
+    ['assetName','assetSerial','assetDescription','assetBuilding','assetFloor','assetRoom',
+     'assetPurchaseDate','assetPurchaseCost','assetWarrantyExpiry']
         .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
     document.getElementById('assetCategory').value = '';
     document.getElementById('assetStatus').value   = 'Available';
@@ -214,9 +232,9 @@ function hideAssetError() {
 }
 
 function setAssetLoading(loading) {
-    document.getElementById('assetSubmitBtn').disabled          = loading;
-    document.getElementById('assetSubmitText').style.display    = loading ? 'none'   : 'inline';
-    document.getElementById('assetSubmitLoader').style.display  = loading ? 'inline' : 'none';
+    document.getElementById('assetSubmitBtn').disabled         = loading;
+    document.getElementById('assetSubmitText').style.display   = loading ? 'none'   : 'inline';
+    document.getElementById('assetSubmitLoader').style.display = loading ? 'inline' : 'none';
 }
 
 function showAssetToast(message) {

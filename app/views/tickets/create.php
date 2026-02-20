@@ -70,8 +70,7 @@ $title_suggestion    = $category ? "$category – " : '';
         <!-- Staff Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <div class="sidebar-logo">LIU</div>
-                <div class="sidebar-title">Internal Portal</div>
+                <img src="/internal_portal/public/images/liulogo.png" alt="LIU" style="height:36px;object-fit:contain;">                <div class="sidebar-title">Internal Portal</div>
             </div>
             <nav class="sidebar-nav">
                 <div class="sidebar-nav-section">
