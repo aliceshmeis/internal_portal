@@ -78,6 +78,23 @@ class Asset {
         }
     }
     
+    public static function getByUser($user_id) {
+    try {
+        $db   = (new Database())->getConnection();
+        $stmt = $db->prepare("
+            SELECT a.id, a.asset_tag, a.name, a.category, a.status, c.campus_name
+            FROM assets a
+            LEFT JOIN campuses c ON a.campus_id = c.id
+            WHERE a.assigned_to = :user_id
+            ORDER BY a.updated_at DESC
+            LIMIT 10
+        ");
+        $stmt->execute([':user_id' => $user_id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        return [];
+    }
+}
     /**
      * Get all assets (Admin view)
      */

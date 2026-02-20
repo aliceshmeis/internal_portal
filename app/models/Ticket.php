@@ -50,6 +50,23 @@ class Ticket {
         return false;
     }
 }
+public static function getByUser($user_id) {
+    try {
+        $db   = (new Database())->getConnection();
+        $stmt = $db->prepare("
+            SELECT id, title, status, priority, category, created_at, updated_at
+            FROM tickets
+            WHERE created_by = :user_id
+              AND status NOT IN ('Resolved', 'Closed')
+            ORDER BY updated_at DESC
+            LIMIT 10
+        ");
+        $stmt->execute([':user_id' => $user_id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        return [];
+    }
+}
     
     /**
      * Find ticket by ID

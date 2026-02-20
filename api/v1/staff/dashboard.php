@@ -1,27 +1,18 @@
 <?php
 session_start();
-
-// Prevent any output
 error_reporting(0);
 ini_set('display_errors', 0);
-
 header('Content-Type: application/json');
 
-// Simple test response
-echo json_encode([
-    'success' => true,
-    'data' => [
-        'tickets' => [
-            'open' => 5,
-            'in_progress' => 2,
-            'resolved_month' => 8
-        ],
-        'assets' => [
-            'count' => 3
-        ],
-        'my_tickets' => [],
-        'my_assets' => []
-    ]
-]);
-exit;
+require_once __DIR__ . '/../../../config/database.php';
+require_once __DIR__ . '/../../../core/Auth.php';
+require_once __DIR__ . '/../../../core/Response.php';
+require_once __DIR__ . '/../../../core/Request.php';
+require_once __DIR__ . '/../../../core/Model.php';
+require_once __DIR__ . '/../../../app/Models/Ticket.php';
+require_once __DIR__ . '/../../../app/Models/Asset.php';
+require_once __DIR__ . '/../../../app/Controllers/StaffDashboardController.php';
+
+$controller = new StaffDashboardController();
+echo $controller->index();
 ?>

@@ -473,6 +473,68 @@ public function create() {
             return Response::serverError('Failed to resolve ticket');
         }
     }
+    public function upload() {
+    if (!Auth::check())     return Response::unauthorized();
+    if (!Request::isPost()) return Response::methodNotAllowed('POST');
+
+    $ticket_id = isset($_POST['ticket_id']) ? intval($_POST['ticket_id']) : 0;
+    if (!$ticket_id) return Response::error('Ticket ID required', 400);
+    if (empty($_FILES['attachments'])) return Response::error('No files uploaded', 400);
+
+    $upload_dir = __DIR__ . '/../../../storage/attachments/' . $ticket_id . '/';
+    if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
+
+    $allowed = ['image/png','image/jpeg','image/gif','application/pdf',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'text/plain'];
+    $max_size  = 5 * 1024 * 1024;
+    $uploaded  = [];
+    $errors    = [];
+    $files     = $_FILES['attachments'];
+    $count     = is_array($files['name']) ? count($files['name']) : 1;
+
+    for ($i = 0; $i < $count; $i++) {
+        $name  = is_array($files['name'])     ? $files['name'][$i]     : $files['name'];
+        $tmp   = is_array($files['tmp_name']) ? $files['tmp_name'][$i] : $files['tmp_name'];
+        $size  = is_array($files['size'])     ? $files['size'][$i]     : $files['size'];
+        $error = is_array($files['error'])    ? $files['error'][$i]    : $files['error'];
+
+        if ($error !== UPLOAD_ERR_OK)  { $errors[] = "$name: Upload error";       continue; }
+        if ($size > $max_size)         { $errors[] = "$name: Exceeds 5MB limit";  continue; }
+
+        $finfo     = finfo_open(FILEINFO_MIME_TYPE);
+        $real_type = finfo_file($finfo, $tmp);
+        finfo_close($finfo);
+
+        if (!in_array($real_type, $allowed)) { $errors[] = "$name: Type not allowed"; continue; }
+
+        $ext       = pathinfo($name, PATHINFO_EXTENSION);
+        $safe_name = uniqid('attach_') . '.' . strtolower($ext);
+        $dest      = $upload_dir . $safe_name;
+        $web_path  = '/internal_portal/storage/attachments/' . $ticket_id . '/' . $safe_name;
+
+        if (!move_uploaded_file($tmp, $dest)) { $errors[] = "$name: Failed to save"; continue; }
+
+        TicketAttachment::create([
+            'ticket_id'   => $ticket_id,
+            'file_name'   => $name,
+            'file_path'   => $web_path,
+            'file_size'   => $size,
+            'file_type'   => $real_type,
+            'uploaded_by' => Auth::userId()
+        ]);
+
+        $uploaded[] = ['name' => $name, 'path' => $web_path, 'size' => $size];
+    }
+
+    return json_encode([
+        'success'  => count($uploaded) > 0,
+        'message'  => count($uploaded) . ' file(s) uploaded' . (count($errors) ? ', ' . count($errors) . ' failed' : ''),
+        'uploaded' => $uploaded,
+        'errors'   => $errors
+    ]);
+}
     
     /**
      * Add comment to ticket

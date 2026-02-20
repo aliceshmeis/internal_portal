@@ -294,10 +294,15 @@ async function submitTicket() {
             await uploadAttachments(ticketId);
         }
 
-        showSuccess('Ticket submitted successfully! Redirecting...');
-        setTimeout(() => {
-            window.location.href = '../tickets/my-tickets.php';
-        }, 1500);
+       showSuccess('Ticket submitted successfully!');
+   selectedFiles = [];
+   renderFileList();
+   document.getElementById('ticketTitle').value = '';
+   document.getElementById('ticketDescription').value = '';
+   setLoading(false);
+   setTimeout(() => {
+    window.location.href = '/internal_portal/app/views/dashboard/staff-dashboard.php';
+}, 2000);
 
     } catch (e) {
         showError('Network error. Please try again.');
