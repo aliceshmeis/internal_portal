@@ -215,7 +215,7 @@ async function loadEditCampuses(selectedId) {
     sel.innerHTML = '<option value="">Select campus...</option>';
     if (data.success) {
         data.data.forEach(c => {
-            sel.innerHTML += `<option value="${c.id}" ${c.id == selectedId ? 'selected' : ''}>${c.name}</option>`;
+            sel.innerHTML += `<option value="${c.id}" ${c.id == selectedId ? 'selected' : ''}>${c.campus_name}</option>`;
         });
     }
 }

@@ -15,21 +15,22 @@ public function create() {
 
     $input = Request::json();
 
-    // Validate required fields
     if (empty($input['title']))       return Response::error('Title is required', 400);
     if (empty($input['description'])) return Response::error('Description is required', 400);
 
-    // Validate priority
     $allowed_priorities = ['Low', 'Medium', 'High', 'Critical'];
     $priority = $input['priority'] ?? 'Medium';
     if (!in_array($priority, $allowed_priorities))
         return Response::error('Invalid priority. Allowed: ' . implode(', ', $allowed_priorities), 400);
 
+    $campus_id = $input['campus_id'] ?? Auth::campusId();
+    if (empty($campus_id)) return Response::error('Campus not found for this user', 400);
+
     $data = [
         'title'       => trim($input['title']),
         'description' => trim($input['description']),
         'priority'    => $priority,
-        'campus_id'   => Auth::campusId(),
+        'campus_id'   => $campus_id,
         'created_by'  => Auth::userId(),
         'category'    => $input['category'] ?? null,
         'building'    => !empty($input['building']) ? trim($input['building']) : null,
@@ -38,7 +39,6 @@ public function create() {
         'ssid'        => !empty($input['ssid'])      ? trim($input['ssid'])     : null,
     ];
 
-    // Handle assigned_to (Admin only)
     if (isset($input['assigned_to'])) {
         if (!Auth::isAdmin())
             return Response::forbidden('Only Admins can assign tickets during creation');
@@ -52,6 +52,14 @@ public function create() {
     if ($ticket) return Response::success('Ticket created successfully', $ticket, 201);
 
     return Response::serverError('Failed to create ticket');
+}
+
+public function myTickets() {
+    if (!Auth::check())     return Response::unauthorized();
+    if (!Request::isGet())  return Response::methodNotAllowed('GET');
+
+    $tickets = Ticket::getByUser(Auth::userId());
+    return Response::success('Tickets retrieved', $tickets);
 }
     
     /**
@@ -635,6 +643,18 @@ public function create() {
         return Response::success('Comments retrieved successfully', $comments, 200, [
             'count' => count($comments)
         ]);
+    }
+
+    /**
+     * Get ticket counts by status (IT Dashboard cards)
+     */
+    public function getStats() {
+        if (!Auth::check())    return Response::unauthorized();
+        if (!Request::isGet()) return Response::methodNotAllowed('GET');
+
+        $stats = Ticket::getStatsByStatus(Auth::isAdmin() ? null : Auth::campusId());
+
+        return Response::success('Stats retrieved', $stats);
     }
 }
 ?>

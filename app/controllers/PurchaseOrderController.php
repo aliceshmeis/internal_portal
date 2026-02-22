@@ -5,515 +5,249 @@ require_once __DIR__ . '/../../core/Request.php';
 require_once __DIR__ . '/../Models/PurchaseOrder.php';
 
 class PurchaseOrderController {
-    
-    /**
-     * Create a new purchase order
-     */
+
     public function create() {
-        // Auth check
-        if (!Auth::check()) {
-            return Response::unauthorized();
-        }
-        
-        // Permission check
-        if (!Auth::hasRole(['Admin', 'Asset Manager'])) {
-            return Response::forbidden('Only Admin and Asset Manager can create purchase orders');
-        }
-        
-        // Method check
-        if (!Request::isPost()) {
-            return Response::methodNotAllowed('POST');
-        }
-        
-        // Get input
+        if (!Auth::check())                                   return Response::unauthorized();
+        if (!Auth::hasRole(['Admin', 'Asset Manager']))       return Response::forbidden('Only Admin and Asset Manager can create purchase orders');
+        if (!Request::isPost())                               return Response::methodNotAllowed('POST');
+
         $input = Request::json();
-        
-        // Validate
+
         $errors = [];
-        if (empty($input['supplier'])) {
-            $errors[] = 'Supplier is required';
-        }
-        if (empty($input['items']) || !is_array($input['items']) || count($input['items']) === 0) {
-            $errors[] = 'At least one item is required';
-        }
-        
-        if (!empty($errors)) {
-            return Response::error('Validation failed', 400, $errors);
-        }
-        
-        // Validate items
+        if (empty($input['supplier']))                        $errors[] = 'Supplier is required';
+        if (empty($input['items']) || !is_array($input['items'])) $errors[] = 'At least one item is required';
+        if (!empty($errors))                                  return Response::error('Validation failed', 400, $errors);
+
+        // Validate each item
         foreach ($input['items'] as $index => $item) {
-            if (empty($item['item_name'])) {
-                $errors[] = "Item #" . ($index + 1) . ": Item name is required";
-            }
-            if (!isset($item['quantity']) || !is_numeric($item['quantity']) || $item['quantity'] <= 0) {
-                $errors[] = "Item #" . ($index + 1) . ": Valid quantity is required";
-            }
-            if (!isset($item['unit_price']) || !is_numeric($item['unit_price']) || $item['unit_price'] < 0) {
-                $errors[] = "Item #" . ($index + 1) . ": Valid unit price is required";
-            }
+            $n = $index + 1;
+            if (empty($item['item_name']))                    $errors[] = "Item #{$n}: name is required";
+            if (empty($item['item_type']) || !in_array($item['item_type'], ['stock','asset']))
+                                                              $errors[] = "Item #{$n}: item_type must be stock or asset";
+            if (!isset($item['quantity']) || $item['quantity'] <= 0)
+                                                              $errors[] = "Item #{$n}: valid quantity is required";
+            if (!isset($item['unit_price']) || $item['unit_price'] < 0)
+                                                              $errors[] = "Item #{$n}: valid unit price is required";
+            if ($item['item_type'] === 'stock' && empty($item['stock_id']))
+                                                              $errors[] = "Item #{$n}: stock_id is required for stock items";
+            if ($item['item_type'] === 'asset' && empty($item['asset_category']))
+                                                              $errors[] = "Item #{$n}: asset_category is required for asset items";
         }
-        
-        if (!empty($errors)) {
-            return Response::error('Item validation failed', 400, $errors);
-        }
-        
-        // Prepare data
+        if (!empty($errors))                                  return Response::error('Item validation failed', 400, $errors);
+
         $data = [
-            'supplier' => trim($input['supplier']),
-            'notes' => isset($input['notes']) ? trim($input['notes']) : null,
-            'campus_id' => Auth::campusId(),
-            'created_by' => Auth::userId()
+            'supplier'   => trim($input['supplier']),
+            'notes'      => isset($input['notes'])      ? trim($input['notes'])      : null,
+            'campus_id'  => $input['campus_id']         ?? Auth::campusId(),
+            'created_by' => Auth::userId(),
         ];
-        
-        // Prepare items
+
         $items = [];
         foreach ($input['items'] as $item) {
             $items[] = [
-                'item_name' => trim($item['item_name']),
-                'quantity' => intval($item['quantity']),
-                'unit_price' => floatval($item['unit_price']),
-                'notes' => isset($item['notes']) ? trim($item['notes']) : null
+                'item_type'      => $item['item_type'],
+                'stock_id'       => $item['item_type'] === 'stock' ? intval($item['stock_id']) : null,
+                'asset_category' => $item['item_type'] === 'asset' ? $item['asset_category']   : null,
+                'asset_brand'    => $item['asset_brand']    ?? null,
+                'asset_model'    => $item['asset_model']    ?? null,
+                'item_name'      => trim($item['item_name']),
+                'quantity'       => intval($item['quantity']),
+                'unit_price'     => floatval($item['unit_price']),
+                'notes'          => $item['notes'] ?? null,
             ];
         }
-        
-        // Create PO
+
         $po = PurchaseOrder::create($data, $items);
-        
-        if ($po) {
-            return Response::success('Purchase order created successfully', $po, 201);
-        } else {
-            return Response::serverError('Failed to create purchase order');
-        }
+        if ($po) return Response::success('Purchase order created successfully', $po, 201);
+        return Response::serverError('Failed to create purchase order');
     }
-    
-    /**
-     * List all purchase orders
-     */
+
     public function list() {
-        // Auth check
-        if (!Auth::check()) {
-            return Response::unauthorized();
-        }
-        
-        // Method check
-        if (!Request::isGet()) {
-            return Response::methodNotAllowed('GET');
-        }
-        
-        // Get filters
+        if (!Auth::check())    return Response::unauthorized();
+        if (!Request::isGet()) return Response::methodNotAllowed('GET');
+
         $filters = [
-            'status' => Request::get('status'),
-            'approval_status' => Request::get('approval_status')
+            'status'          => Request::get('status'),
+            'approval_status' => Request::get('approval_status'),
         ];
-        
-        // Get POs based on role
-        if (Auth::isAdmin()) {
-            $pos = PurchaseOrder::getAll($filters);
-        } else {
-            $pos = PurchaseOrder::getByCampus(Auth::campusId(), $filters);
-        }
-        
-        return Response::success('Purchase orders retrieved successfully', $pos, 200, [
-            'count' => count($pos)
-        ]);
+
+        $pos = Auth::isAdmin()
+            ? PurchaseOrder::getAll($filters)
+            : PurchaseOrder::getByCampus(Auth::campusId(), $filters);
+
+        return Response::success('Purchase orders retrieved successfully', $pos, 200, ['count' => count($pos)]);
     }
-    
-    /**
-     * Show single purchase order
-     */
+
     public function show() {
-        // Auth check
-        if (!Auth::check()) {
-            return Response::unauthorized();
-        }
-        
-        // Method check
-        if (!Request::isGet()) {
-            return Response::methodNotAllowed('GET');
-        }
-        
-        // Get ID
+        if (!Auth::check())    return Response::unauthorized();
+        if (!Request::isGet()) return Response::methodNotAllowed('GET');
+
         $id = Request::get('id');
-        if (!$id) {
-            return Response::error('Purchase order ID is required', 400);
-        }
-        
-        // Get PO
+        if (!$id) return Response::error('Purchase order ID is required', 400);
+
         $po = PurchaseOrder::find($id);
-        
-        if (!$po) {
-            return Response::notFound('Purchase order not found');
-        }
-        
-        // Permission check
-        if (!Auth::isAdmin() && $po['campus_id'] != Auth::campusId()) {
+        if (!$po) return Response::notFound('Purchase order not found');
+
+        if (!Auth::isAdmin() && $po['campus_id'] != Auth::campusId())
             return Response::forbidden('You do not have permission to view this purchase order');
-        }
-        
+
         return Response::success('Purchase order retrieved successfully', $po);
     }
-    
-    /**
-     * Update purchase order
-     */
+
     public function update() {
-        // Auth check
-        if (!Auth::check()) {
-            return Response::unauthorized();
-        }
-        
-        // Permission check
-        if (!Auth::hasRole(['Admin', 'Asset Manager'])) {
-            return Response::forbidden('Only Admin and Asset Manager can update purchase orders');
-        }
-        
-        // Method check
-        if (!Request::isPut() && !Request::isPatch()) {
-            return Response::methodNotAllowed('PUT, PATCH');
-        }
-        
-        // Get input
+        if (!Auth::check())                             return Response::unauthorized();
+        if (!Auth::hasRole(['Admin', 'Asset Manager'])) return Response::forbidden('Only Admin and Asset Manager can update purchase orders');
+        if (!Request::isPut() && !Request::isPatch())   return Response::methodNotAllowed('PUT, PATCH');
+
         $input = Request::json();
-        
-        if (empty($input['id'])) {
-            return Response::error('Purchase order ID is required', 400);
-        }
-        
+        if (empty($input['id'])) return Response::error('Purchase order ID is required', 400);
+
         $po_id = intval($input['id']);
-        
-        // Get existing PO
-        $po = PurchaseOrder::find($po_id);
-        
-        if (!$po) {
-            return Response::notFound('Purchase order not found');
-        }
-        
-        // Permission check
-        if (!Auth::isAdmin() && $po['campus_id'] != Auth::campusId()) {
+        $po    = PurchaseOrder::find($po_id);
+        if (!$po) return Response::notFound('Purchase order not found');
+
+        if (!Auth::isAdmin() && $po['campus_id'] != Auth::campusId())
             return Response::forbidden('You do not have permission to update this purchase order');
-        }
-        
-        // Can't update if completed or cancelled
-        if (in_array($po['status'], ['Completed', 'Cancelled'])) {
-            return Response::error('Cannot update purchase order with status: ' . $po['status'], 400);
-        }
-        
-        // Build update data
+
+        if (in_array($po['status'], ['Completed', 'Cancelled']))
+            return Response::error('Cannot update a ' . $po['status'] . ' purchase order', 400);
+
         $updateData = [];
-        
-        if (isset($input['supplier'])) {
-            $updateData['supplier'] = trim($input['supplier']);
-        }
-        
+        if (isset($input['supplier'])) $updateData['supplier'] = trim($input['supplier']);
+        if (isset($input['notes']))    $updateData['notes']    = trim($input['notes']);
         if (isset($input['status'])) {
             $allowed = ['Draft', 'Pending Approval', 'Approved', 'Rejected', 'Completed', 'Cancelled'];
-            if (!in_array($input['status'], $allowed)) {
-                return Response::error('Invalid status', 400);
-            }
+            if (!in_array($input['status'], $allowed)) return Response::error('Invalid status', 400);
             $updateData['status'] = $input['status'];
         }
-        
-        if (isset($input['notes'])) {
-            $updateData['notes'] = trim($input['notes']);
-        }
-        
-        if (empty($updateData)) {
-            return Response::error('No fields to update', 400);
-        }
-        
-        // Update PO
+        if (empty($updateData)) return Response::error('No fields to update', 400);
+
         $updated = PurchaseOrder::update($po_id, $updateData);
-        
-        if ($updated) {
-            return Response::success('Purchase order updated successfully', $updated);
-        } else {
-            return Response::serverError('Failed to update purchase order');
-        }
+        if ($updated) return Response::success('Purchase order updated successfully', $updated);
+        return Response::serverError('Failed to update purchase order');
     }
-    
-    /**
-     * Submit PO for approval
-     */
+
     public function submit() {
-        // Auth check
-        if (!Auth::check()) {
-            return Response::unauthorized();
-        }
-        
-        // Permission check
-        if (!Auth::hasRole(['Admin', 'Asset Manager'])) {
-            return Response::forbidden('Only Admin and Asset Manager can submit purchase orders');
-        }
-        
-        // Method check
-        if (!Request::isPost()) {
-            return Response::methodNotAllowed('POST');
-        }
-        
-        // Get input
-        $input = Request::json();
-        
-        if (empty($input['id'])) {
-            return Response::error('Purchase order ID is required', 400);
-        }
-        
+        if (!Auth::check())                             return Response::unauthorized();
+        if (!Auth::hasRole(['Admin', 'Asset Manager'])) return Response::forbidden('Only Admin and Asset Manager can submit purchase orders');
+        if (!Request::isPost())                         return Response::methodNotAllowed('POST');
+
+        $input  = Request::json();
+        if (empty($input['id'])) return Response::error('Purchase order ID is required', 400);
+
         $po_id = intval($input['id']);
-        
-        // Get PO
-        $po = PurchaseOrder::find($po_id);
-        
-        if (!$po) {
-            return Response::notFound('Purchase order not found');
-        }
-        
-        // Permission check - Asset Manager can only submit their own
-        if (!Auth::isAdmin() && ($po['campus_id'] != Auth::campusId() || $po['created_by'] != Auth::userId())) {
+        $po    = PurchaseOrder::find($po_id);
+        if (!$po) return Response::notFound('Purchase order not found');
+
+        if (!Auth::isAdmin() && ($po['campus_id'] != Auth::campusId() || $po['created_by'] != Auth::userId()))
             return Response::forbidden('You can only submit purchase orders you created');
-        }
-        
-        // Can only submit if Draft
-        if ($po['status'] !== 'Draft') {
-            return Response::error('Can only submit purchase orders with Draft status', 400);
-        }
-        
-        // Check if has items
-        if ($po['items_count'] == 0) {
-            return Response::error('Cannot submit purchase order without items', 400);
-        }
-        
-        // Submit PO
+
+        // Allow resubmit from Rejected too
+        if (!in_array($po['status'], ['Draft', 'Rejected']))
+            return Response::error('Can only submit Draft or Rejected purchase orders', 400);
+
+        if ($po['items_count'] == 0)
+            return Response::error('Cannot submit a purchase order with no items', 400);
+
         $submitted = PurchaseOrder::submit($po_id);
-        
-        if ($submitted) {
-            return Response::success('Purchase order submitted for approval successfully', $submitted);
-        } else {
-            return Response::serverError('Failed to submit purchase order');
-        }
+        if ($submitted) return Response::success('Purchase order submitted for approval', $submitted);
+        return Response::serverError('Failed to submit purchase order');
     }
-    
-    /**
-     * Approve or reject PO
-     */
+
     public function approve() {
-        // Auth check
-        if (!Auth::check()) {
-            return Response::unauthorized();
-        }
-        
-        // Permission check - Only Admin
-        if (!Auth::isAdmin()) {
-            return Response::forbidden('Only Admin can approve or reject purchase orders');
-        }
-        
-        // Method check
-        if (!Request::isPost() && !Request::isPatch()) {
-            return Response::methodNotAllowed('POST, PATCH');
-        }
-        
-        // Get input
+        if (!Auth::check())    return Response::unauthorized();
+        if (!Auth::isAdmin())  return Response::forbidden('Only Admin can approve or reject purchase orders');
+        if (!Request::isPost() && !Request::isPatch()) return Response::methodNotAllowed('POST, PATCH');
+
         $input = Request::json();
-        
-        if (empty($input['id'])) {
-            return Response::error('Purchase order ID is required', 400);
-        }
-        
-        if (empty($input['action']) || !in_array($input['action'], ['approve', 'reject'])) {
-            return Response::error('Action is required. Valid values: approve, reject', 400);
-        }
-        
-        $po_id = intval($input['id']);
+        if (empty($input['id']))     return Response::error('Purchase order ID is required', 400);
+        if (empty($input['action']) || !in_array($input['action'], ['approve','reject']))
+            return Response::error('Action must be approve or reject', 400);
+
+        $po_id  = intval($input['id']);
         $action = $input['action'];
         $reason = isset($input['reason']) ? trim($input['reason']) : null;
-        
-        // Get PO
+
         $po = PurchaseOrder::find($po_id);
-        
-        if (!$po) {
-            return Response::notFound('Purchase order not found');
-        }
-        
-        // Must be Pending Approval
-        if ($po['status'] !== 'Pending Approval') {
+        if (!$po) return Response::notFound('Purchase order not found');
+
+        if ($po['status'] !== 'Pending Approval')
             return Response::error('Can only approve/reject POs with Pending Approval status', 400);
-        }
-        
-        // Rejection requires reason
-        if ($action === 'reject' && !$reason) {
+
+        if ($action === 'reject' && empty($reason))
             return Response::error('Rejection reason is required', 400);
-        }
-        
-        // Approve or reject
+
         $result = PurchaseOrder::approveOrReject($po_id, $action, Auth::userId(), $reason);
-        
         if ($result) {
-            $message = $action === 'approve' 
-                ? 'Purchase order approved successfully' 
-                : 'Purchase order rejected';
-            return Response::success($message, $result);
-        } else {
-            return Response::serverError('Failed to update purchase order status');
+            $msg = $action === 'approve' ? 'Purchase order approved' : 'Purchase order rejected';
+            return Response::success($msg, $result);
         }
+        return Response::serverError('Failed to update purchase order');
     }
-    
-    /**
-     * Mark PO as received
-     */
+
     public function receive() {
-        // Auth check
-        if (!Auth::check()) {
-            return Response::unauthorized();
-        }
-        
-        // Permission check
-        if (!Auth::hasRole(['Admin', 'Asset Manager'])) {
-            return Response::forbidden('Only Admin and Asset Manager can mark purchase orders as received');
-        }
-        
-        // Method check
-        if (!Request::isPost()) {
-            return Response::methodNotAllowed('POST');
-        }
-        
-        // Get input
+        if (!Auth::check())                             return Response::unauthorized();
+        if (!Auth::hasRole(['Admin', 'Asset Manager'])) return Response::forbidden('Only Admin and Asset Manager can receive purchase orders');
+        if (!Request::isPost())                         return Response::methodNotAllowed('POST');
+
         $input = Request::json();
-        
-        if (empty($input['id'])) {
-            return Response::error('Purchase order ID is required', 400);
-        }
-        
+        if (empty($input['id'])) return Response::error('Purchase order ID is required', 400);
+
         $po_id = intval($input['id']);
-        $notes = isset($input['notes']) ? trim($input['notes']) : null;
-        
-        // Get PO
-        $po = PurchaseOrder::find($po_id);
-        
-        if (!$po) {
-            return Response::notFound('Purchase order not found');
-        }
-        
-        // Permission check
-        if (!Auth::isAdmin() && $po['campus_id'] != Auth::campusId()) {
+        $po    = PurchaseOrder::find($po_id);
+        if (!$po) return Response::notFound('Purchase order not found');
+
+        if (!Auth::isAdmin() && $po['campus_id'] != Auth::campusId())
             return Response::forbidden('You do not have permission to receive this purchase order');
-        }
-        
-        // Must be Approved
-        if ($po['status'] !== 'Approved') {
-            return Response::error('Can only mark Approved POs as received', 400);
-        }
-        
-        // Receive PO
-        $result = PurchaseOrder::receive($po_id, $notes);
-        
-        if ($result) {
-            return Response::success('Purchase order marked as received and stock updated successfully', $result);
-        } else {
-            return Response::serverError('Failed to receive purchase order');
-        }
+
+        if ($po['status'] !== 'Approved')
+            return Response::error('Can only receive Approved purchase orders', 400);
+
+        $result = PurchaseOrder::receive($po_id, Auth::userId());
+        if ($result) return Response::success('Purchase order received — stock updated and assets created', $result);
+        return Response::serverError('Failed to receive purchase order');
     }
-    
-    /**
-     * Cancel purchase order
-     */
+
     public function cancel() {
-        // Auth check
-        if (!Auth::check()) {
-            return Response::unauthorized();
-        }
-        
-        // Permission check
-        if (!Auth::hasRole(['Admin', 'Asset Manager'])) {
-            return Response::forbidden('Only Admin and Asset Manager can cancel purchase orders');
-        }
-        
-        // Method check
-        if (!Request::isPost()) {
-            return Response::methodNotAllowed('POST');
-        }
-        
-        // Get input
-        $input = Request::json();
-        
-        if (empty($input['id'])) {
-            return Response::error('Purchase order ID is required', 400);
-        }
-        
-        $po_id = intval($input['id']);
+        if (!Auth::check())                             return Response::unauthorized();
+        if (!Auth::hasRole(['Admin', 'Asset Manager'])) return Response::forbidden('Only Admin and Asset Manager can cancel purchase orders');
+        if (!Request::isPost())                         return Response::methodNotAllowed('POST');
+
+        $input  = Request::json();
+        if (empty($input['id'])) return Response::error('Purchase order ID is required', 400);
+
+        $po_id  = intval($input['id']);
         $reason = isset($input['reason']) ? trim($input['reason']) : 'No reason provided';
-        
-        // Get PO
+
         $po = PurchaseOrder::find($po_id);
-        
-        if (!$po) {
-            return Response::notFound('Purchase order not found');
-        }
-        
-        // Permission check - Asset Manager can only cancel their own
-        if (!Auth::isAdmin() && ($po['campus_id'] != Auth::campusId() || $po['created_by'] != Auth::userId())) {
+        if (!$po) return Response::notFound('Purchase order not found');
+
+        if (!Auth::isAdmin() && ($po['campus_id'] != Auth::campusId() || $po['created_by'] != Auth::userId()))
             return Response::forbidden('You can only cancel purchase orders you created');
-        }
-        
-        // Can only cancel Draft or Pending Approval
-        if (!in_array($po['status'], ['Draft', 'Pending Approval'])) {
-            return Response::error('Can only cancel POs with Draft or Pending Approval status', 400);
-        }
-        
-        // Cancel PO
+
+        if (!in_array($po['status'], ['Draft', 'Pending Approval', 'Rejected']))
+            return Response::error('Can only cancel Draft, Pending Approval or Rejected POs', 400);
+
         $cancelled = PurchaseOrder::cancel($po_id, $reason, Auth::userId());
-        
-        if ($cancelled) {
-            return Response::success('Purchase order cancelled successfully', $cancelled);
-        } else {
-            return Response::serverError('Failed to cancel purchase order');
-        }
+        if ($cancelled) return Response::success('Purchase order cancelled', $cancelled);
+        return Response::serverError('Failed to cancel purchase order');
     }
-    
-    /**
-     * Delete purchase order
-     */
+
     public function delete() {
-        // Auth check
-        if (!Auth::check()) {
-            return Response::unauthorized();
-        }
-        
-        // Permission check - Only Admin
-        if (!Auth::isAdmin()) {
-            return Response::forbidden('Only Admin can delete purchase orders');
-        }
-        
-        // Method check
-        if (!Request::isDelete() && !Request::isPost()) {
-            return Response::methodNotAllowed('DELETE, POST');
-        }
-        
-        // Get input
+        if (!Auth::check())   return Response::unauthorized();
+        if (!Auth::isAdmin()) return Response::forbidden('Only Admin can delete purchase orders');
+        if (!Request::isDelete() && !Request::isPost()) return Response::methodNotAllowed('DELETE, POST');
+
         $input = Request::json();
-        
-        if (empty($input['id'])) {
-            return Response::error('Purchase order ID is required', 400);
-        }
-        
+        if (empty($input['id'])) return Response::error('Purchase order ID is required', 400);
+
         $po_id = intval($input['id']);
-        
-        // Get PO
-        $po = PurchaseOrder::find($po_id);
-        
-        if (!$po) {
-            return Response::notFound('Purchase order not found');
-        }
-        
-        // Delete PO
+        $po    = PurchaseOrder::find($po_id);
+        if (!$po) return Response::notFound('Purchase order not found');
+
         $deleted = PurchaseOrder::delete($po_id);
-        
-        if ($deleted) {
-            return Response::success('Purchase order deleted successfully', [
-                'po_id' => $po_id,
-                'po_number' => $po['po_number']
-            ]);
-        } else {
-            return Response::serverError('Failed to delete purchase order');
-        }
+        if ($deleted) return Response::success('Purchase order deleted', ['po_id' => $po_id, 'po_number' => $po['po_number']]);
+        return Response::serverError('Failed to delete purchase order');
     }
 }
 ?>

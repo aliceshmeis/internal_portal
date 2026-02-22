@@ -10,9 +10,8 @@ require_once __DIR__ . '/../../../core/Response.php';
 require_once __DIR__ . '/../../../core/Request.php';
 require_once __DIR__ . '/../../../core/Model.php';
 require_once __DIR__ . '/../../../app/Models/Ticket.php';
-require_once __DIR__ . '/../../../app/Models/Asset.php';
-require_once __DIR__ . '/../../../app/Controllers/StaffDashboardController.php';
+require_once __DIR__ . '/../../../app/Controllers/TicketController.php';
 
-$controller = new StaffDashboardController();
-echo $controller->index();
+$controller = new TicketController();
+echo $controller->myTickets();
 ?>

@@ -47,19 +47,19 @@ class Ticket {
 
         return false;
     } catch (Exception $e) {
-        return false;
+       return ['error' => $e->getMessage()]; // temporary debug
     }
 }
+
+
 public static function getByUser($user_id) {
     try {
         $db   = (new Database())->getConnection();
         $stmt = $db->prepare("
-            SELECT id, title, status, priority, category, created_at, updated_at
+            SELECT id, title, category, status, priority, building, floor, room, created_at, updated_at
             FROM tickets
             WHERE created_by = :user_id
-              AND status NOT IN ('Resolved', 'Closed')
             ORDER BY updated_at DESC
-            LIMIT 10
         ");
         $stmt->execute([':user_id' => $user_id]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -433,6 +433,35 @@ public static function getByUser($user_id) {
         } catch (Exception $e) {
             return [];
         }
+    }
+    /**
+     * Get ticket counts grouped by status
+     */
+    public static function getStatsByStatus($campus_id = null) {
+        $db  = (new Database())->getConnection();
+        $sql = "SELECT status, COUNT(*) AS total FROM tickets";
+        $params = [];
+
+        if ($campus_id) {
+            $sql .= " WHERE campus_id = :campus_id";
+            $params[':campus_id'] = $campus_id;
+        }
+
+        $sql .= " GROUP BY status";
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll();
+
+        $stats = ['open' => 0, 'in_progress' => 0, 'pending' => 0, 'resolved' => 0];
+        foreach ($rows as $row) {
+            $key = strtolower(str_replace(' ', '_', $row['status']));
+            if (array_key_exists($key, $stats)) {
+                $stats[$key] = (int) $row['total'];
+            }
+        }
+
+        return $stats;
     }
 }
 ?>
