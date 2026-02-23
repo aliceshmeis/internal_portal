@@ -105,7 +105,7 @@ async function loadAssetDetail() {
         </div>`;
 
     // Actions
-    let actions = `<a href="index.php" class="btn-secondary" style="width:100%;justify-content:center;">← Back to Inventory</a>`;
+    let actions = `<a href="edit.php?id=${ASSET_ID}" class="btn-secondary" style="width:100%;justify-content:center;">✏ Edit Asset</a><a href="index.php" class="btn-secondary" style="width:100%;justify-content:center;margin-top:4px;">← Back to Inventory</a>`;
     if (a.status === 'Available') {
         actions = `<a href="assign.php?id=${ASSET_ID}" class="btn-primary" style="width:100%;justify-content:center;">Assign to Employee</a>` + actions;
     } else if (a.assigned_to) {

@@ -71,6 +71,7 @@ class AuthHelper {
             
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
             
+            
             if (!$user) {
                 return ['success' => false, 'message' => 'Invalid email or password'];
             }
@@ -83,7 +84,7 @@ class AuthHelper {
                 return ['success' => false, 'message' => 'Invalid email or password'];
             }
             
-            session_regenerate_id(true);
+            
             
             $update_query = "UPDATE users SET last_login = NOW() WHERE id = :id";
             $update_stmt  = $db->prepare($update_query);

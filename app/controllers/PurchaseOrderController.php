@@ -71,9 +71,7 @@ class PurchaseOrderController {
             'approval_status' => Request::get('approval_status'),
         ];
 
-        $pos = Auth::isAdmin()
-            ? PurchaseOrder::getAll($filters)
-            : PurchaseOrder::getByCampus(Auth::campusId(), $filters);
+        $pos = PurchaseOrder::getByCampus(Auth::campusId(), $filters);
 
         return Response::success('Purchase orders retrieved successfully', $pos, 200, ['count' => count($pos)]);
     }

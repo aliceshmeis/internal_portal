@@ -17,6 +17,17 @@ $user_role = $_SESSION['role'];
     <style>
         .sidebar { transition: width 0.25s ease; }
         .sidebar-collapsed { width: 0 !important; overflow: hidden !important; padding: 0 !important; }
+        .pending-reply-hint {
+            font-size: 11px;
+            color: #d97706;
+            font-weight: 600;
+            margin-top: 3px;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        tr.has-pending { background: #fffdf0; }
+        tr.has-pending:hover { background: #fff8e1 !important; }
     </style>
 </head>
 <body>
@@ -180,11 +191,14 @@ function renderTable() {
     document.getElementById('ticketsTable').style.display  = 'block';
 
     document.getElementById('ticketsTbody').innerHTML = filtered.map(t => `
-        <tr onclick="viewTicket(${t.id})" style="cursor:pointer;">
+        <tr onclick="viewTicket(${t.id})" style="cursor:pointer;" class="${t.status === 'Pending' ? 'has-pending' : ''}">
             <td style="padding:13px 20px;"><span class="ticket-id-clean">#T-${String(t.id).padStart(4,'0')}</span></td>
             <td style="padding:13px 20px;"><span class="ticket-title-clean">${escapeHtml(t.title)}</span></td>
             <td style="padding:13px 20px;"><span style="font-size:13px;color:var(--color-text-secondary);">${escapeHtml(t.category || '—')}</span></td>
-            <td style="padding:13px 20px;">${getStatusBadge(t.status)}</td>
+            <td style="padding:13px 20px;">
+                ${getStatusBadge(t.status)}
+                ${t.status === 'Pending' ? '<div class="pending-reply-hint">⚡ Waiting for your response</div>' : ''}
+            </td>
             <td style="padding:13px 20px;">${getPriorityBadge(t.priority)}</td>
             <td style="padding:13px 20px;"><span class="ticket-updated">${formatDate(t.updated_at)}</span></td>
         </tr>

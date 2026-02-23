@@ -6,9 +6,6 @@
 class User extends Model {
     protected $table = 'users';
 
-    /**
-     * Find user by Google ID
-     */
     public function findByGoogleId($googleId) {
         $query = "SELECT * FROM " . $this->table . " WHERE google_id = :google_id LIMIT 1";
         $stmt = $this->db->prepare($query);
@@ -17,9 +14,6 @@ class User extends Model {
         return $stmt->fetch();
     }
 
-    /**
-     * Find user by email
-     */
     public function findByEmail($email) {
         $query = "SELECT * FROM " . $this->table . " WHERE email = :email LIMIT 1";
         $stmt = $this->db->prepare($query);
@@ -28,9 +22,6 @@ class User extends Model {
         return $stmt->fetch();
     }
 
-    /**
-     * Create new user from Google data
-     */
     public function createFromGoogle($googleData) {
         $query = "INSERT INTO " . $this->table . " 
                   (google_id, email, name, profile_picture, role, campus_id, is_active) 
@@ -58,9 +49,6 @@ class User extends Model {
         return false;
     }
 
-    /**
-     * Update last login time
-     */
     public function updateLastLogin($userId) {
         $query = "UPDATE " . $this->table . " SET last_login = NOW() WHERE id = :id";
         $stmt = $this->db->prepare($query);
@@ -69,30 +57,51 @@ class User extends Model {
     }
 
     /**
-     * Get all users with campus name
+     * Get all users with campus name (no campus filter)
      */
     public function getAll() {
-    try {
-        $database = new Database();
-        $db = $database->getConnection();
+        try {
+            $database = new Database();
+            $db = $database->getConnection();
 
-        $stmt = $db->query("
-            SELECT u.*, c.campus_name, d.name AS department_name
-            FROM users u
-            LEFT JOIN campuses c    ON u.campus_id     = c.id
-            LEFT JOIN departments d ON u.department_id = d.id
-            ORDER BY u.created_at DESC
-        ");
+            $stmt = $db->query("
+                SELECT u.*, c.campus_name, d.name AS department_name
+                FROM users u
+                LEFT JOIN campuses c    ON u.campus_id     = c.id
+                LEFT JOIN departments d ON u.department_id = d.id
+                ORDER BY u.created_at DESC
+            ");
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (Exception $e) {
-        return false;
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            return false;
+        }
     }
-}
 
     /**
-     * Find user by ID (with campus)
+     * Get users filtered by campus
      */
+    public function getByCampus($campus_id) {
+        try {
+            $database = new Database();
+            $db = $database->getConnection();
+
+            $stmt = $db->prepare("
+                SELECT u.*, c.campus_name, d.name AS department_name
+                FROM users u
+                LEFT JOIN campuses c    ON u.campus_id     = c.id
+                LEFT JOIN departments d ON u.department_id = d.id
+                WHERE u.campus_id = :campus_id
+                ORDER BY u.created_at DESC
+            ");
+            $stmt->execute([':campus_id' => $campus_id]);
+
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
     public function findById($id) {
         $query = "SELECT u.*, c.campus_name
                   FROM " . $this->table . " u
@@ -105,9 +114,6 @@ class User extends Model {
         return $stmt->fetch();
     }
 
-    /**
-     * Create a new user (email/password login)
-     */
     public function createUser($data) {
         $query = "INSERT INTO " . $this->table . "
                     (name, email, password, role, campus_id, department_id, is_active, login_method, created_at)
@@ -135,17 +141,12 @@ class User extends Model {
         return false;
     }
 
-   
+    public function deleteUser($id) {
+        $stmt = $this->db->prepare("DELETE FROM users WHERE id = :id");
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
 
-public function deleteUser($id) {
-    $stmt = $this->db->prepare("DELETE FROM users WHERE id = :id");
-    $stmt->bindValue(':id', $id, PDO::PARAM_INT);
-    return $stmt->execute();
-}
-
-    /**
-     * Update a user
-     */
     public function updateUser($id, $data) {
         $fields = [];
         $params = [':id' => $id];
@@ -166,10 +167,5 @@ public function deleteUser($id) {
 
         return false;
     }
-
-    /**
-     * Delete a user
-     */
-    
 }
 ?>

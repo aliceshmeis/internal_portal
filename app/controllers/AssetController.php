@@ -89,11 +89,7 @@ class AssetController {
         // Remove empty filters
         $filters = array_filter($filters);
         
-        if (Auth::isAdmin()) {
-            $assets = Asset::getAll($filters);
-        } else {
-            $assets = Asset::getByCampus(Auth::campusId(), $filters);
-        }
+        $assets = Asset::getByCampus(Auth::campusId(), $filters);
         
         return Response::success('Assets retrieved successfully', $assets, 200, [
             'count' => count($assets)

@@ -17,7 +17,7 @@ session_start();
             <img src="/internal_portal/public/images/liulogo.png" alt="LIU Logo" class="brand-icon">
             <img src="/internal_portal/public/images/Logo-Text.png" alt="Lebanese International University" class="brand-logo">
             <div class="brand-divider"></div>
-            <span class="brand-subtitle">Internal Services Portal</span>
+            <span class="brand-subtitle"></span>
         </div>
     </div>
 

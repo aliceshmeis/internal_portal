@@ -346,19 +346,21 @@ async function updateStatus() {
 
 async function loadUsers() {
     try {
-        const res  = await fetch(`${API_BASE}/users/list.php`, { credentials: 'include' });
+        const res  = await fetch(`${API_BASE}/users/it-list.php`, { credentials: 'include' });
         const data = await res.json();
         const sel  = document.getElementById('assign-select');
         if (!sel) return;
 
         sel.innerHTML = '<option value="">Unassigned</option>';
-        if (data.success && data.data) {
+        if (data.success && data.data && data.data.length > 0) {
             data.data.forEach(u => {
                 sel.innerHTML += `<option value="${u.id}">${escapeHtml(u.name)} (${u.role})</option>`;
             });
             if (currentTicket?.assigned_to) sel.value = currentTicket.assigned_to;
+        } else {
+            sel.innerHTML += '<option disabled>No IT staff in this campus</option>';
         }
-    } catch (e) { console.error('Failed to load users', e); }
+    } catch (e) { console.error('Failed to load IT users', e); }
 }
 
 // ─── ASSIGN ───────────────────────────────────────────────────────────────────

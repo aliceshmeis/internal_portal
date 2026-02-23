@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['user_id']))           { header('Location: /internal_portal/app/views/auth/login.php'); exit; }
-if ($_SESSION['role'] !== 'Asset Manager')  { header('Location: /internal_portal/app/views/auth/login.php'); exit; }
+if (!in_array($_SESSION['role'], ['Admin', 'Asset Manager']))  { header('Location: /internal_portal/app/views/auth/login.php'); exit; }
 $user_name = $_SESSION['name'];
 $user_role = $_SESSION['role'];
 ?>

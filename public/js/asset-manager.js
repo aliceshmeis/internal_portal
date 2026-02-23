@@ -258,6 +258,7 @@ function renderInventory() {
             <td>
                 <div class="action-btns">
                     <a href="view.php?id=${a.id}" class="btn-secondary btn-sm">View</a>
+                    <a href="edit.php?id=${a.id}" class="btn-secondary btn-sm">Edit</a>
                     ${a.status === 'Available'
                         ? `<a href="assign.php?id=${a.id}" class="btn-primary btn-sm">Assign</a>`
                         : a.assigned_to
@@ -668,7 +669,7 @@ async function loadCampusOptions(selectId) {
 }
 async function loadUserOptions(selectId) {
     try {
-        const res    = await fetch(`${AM_API}/users/list.php`, { credentials:'include' });
+        const res    = await fetch(`${AM_API}/users/staff-list.php`, { credentials:'include' });
         const result = await res.json();
         const sel    = document.getElementById(selectId);
         if (!sel) return;

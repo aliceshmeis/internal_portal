@@ -3,6 +3,7 @@ require_once __DIR__ . '/../../core/Auth.php';
 require_once __DIR__ . '/../../core/Response.php';
 require_once __DIR__ . '/../../core/Request.php';
 require_once __DIR__ . '/../Models/User.php';
+require_once __DIR__ . '/../../config/database.php'; 
 
 class UserController {
 
@@ -12,26 +13,19 @@ class UserController {
         $this->userModel = new User();
     }
 
-    /**
-     * List all users
-     * GET /api/v1/users/list.php
-     */
     public function list() {
         if (!Auth::check())    return Response::unauthorized();
         if (!Auth::isAdmin())  return Response::forbidden('Only Admins can view users');
         if (!Request::isGet()) return Response::methodNotAllowed('GET');
 
-        $users = $this->userModel->getAll();
+        // Always scope by campus — admin sees only users in their campus
+        $users = $this->userModel->getByCampus(Auth::campusId());
 
         if ($users === false) return Response::serverError('Failed to retrieve users');
 
         return Response::success('Users retrieved', $users, 200, ['count' => count($users)]);
     }
 
-    /**
-     * Create a new user
-     * POST /api/v1/users/create.php
-     */
     public function create() {
         if (!Auth::check())     return Response::unauthorized();
         if (!Auth::isAdmin())   return Response::forbidden('Only Admins can create users');
@@ -55,6 +49,10 @@ class UserController {
         if (!in_array($input['role'], $allowed_roles))
             return Response::error('Invalid role', 400);
 
+        // Admin can only create users in their own campus
+        if (intval($input['campus_id']) !== Auth::campusId())
+            return Response::forbidden('You can only create users for your own campus');
+
         if ($this->userModel->findByEmail($input['email']))
             return Response::error('A user with this email already exists', 409);
 
@@ -69,19 +67,13 @@ class UserController {
         ];
 
         $user = $this->userModel->createUser($data);
-
         if ($user) return Response::success('User created successfully', $user, 201);
-
         return Response::serverError('Failed to create user');
     }
 
-    /**
-     * Update a user
-     * POST /api/v1/users/update.php
-     */
     public function updateUser() {
-        if (!Auth::check())    return Response::unauthorized();
-        if (!Auth::isAdmin())  return Response::forbidden('Only Admins can update users');
+        if (!Auth::check())   return Response::unauthorized();
+        if (!Auth::isAdmin()) return Response::forbidden('Only Admins can update users');
 
         $input = Request::json();
 
@@ -90,12 +82,14 @@ class UserController {
         if (empty($input['email'])) return Response::error('Email is required', 400);
         if (empty($input['role']))  return Response::error('Role is required', 400);
 
-        $id = intval($input['id']);
-
+        $id   = intval($input['id']);
         $user = $this->userModel->findById($id);
         if (!$user) return Response::notFound('User not found');
 
-        // Prevent admin from changing their own role
+        // Admin can only update users in their campus
+        if ($user['campus_id'] != Auth::campusId())
+            return Response::forbidden('You can only update users in your campus');
+
         if ($id === Auth::userId() && $input['role'] !== 'Admin')
             return Response::error('You cannot change your own role', 400);
 
@@ -115,36 +109,55 @@ class UserController {
         }
 
         $updated = $this->userModel->updateUser($id, $data);
-
         if ($updated) return Response::success('User updated successfully', $updated);
-
         return Response::serverError('Failed to update user');
     }
 
-    /**
-     * Delete a user
-     * POST /api/v1/users/delete.php
-     */
+    public function itList() {
+    if (!Auth::check())    return Response::unauthorized();
+    if (!Auth::isAdmin())  return Response::forbidden('Access denied');
+    if (!Request::isGet()) return Response::methodNotAllowed('GET');
+
+    try {
+        $db   = (new Database())->getConnection();
+        $stmt = $db->prepare(
+            "SELECT u.id, u.name, u.email, u.role, c.campus_name
+             FROM users u
+             LEFT JOIN campuses c    ON c.id = u.campus_id
+             LEFT JOIN departments d ON d.id = u.department_id
+             WHERE u.is_active = 1
+               AND u.campus_id = :campus_id
+               AND d.name = 'IT'
+             ORDER BY u.name ASC"
+        );
+        $stmt->execute([':campus_id' => Auth::campusId()]);
+        $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return Response::success('IT staff retrieved', $users, 200, ['count' => count($users)]);
+    } catch (Exception $e) {
+        return Response::serverError('Failed to retrieve IT staff');
+    }
+}
+
     public function deleteUser() {
-        if (!Auth::check())    return Response::unauthorized();
-        if (!Auth::isAdmin())  return Response::forbidden('Only Admins can delete users');
+        if (!Auth::check())   return Response::unauthorized();
+        if (!Auth::isAdmin()) return Response::forbidden('Only Admins can delete users');
 
         $input = Request::json();
-
         if (empty($input['id'])) return Response::error('User ID is required', 400);
 
         $id = intval($input['id']);
-
         if ($id === Auth::userId())
             return Response::error('You cannot delete your own account', 400);
 
         $user = $this->userModel->findById($id);
         if (!$user) return Response::notFound('User not found');
 
+        // Admin can only delete users in their campus
+        if ($user['campus_id'] != Auth::campusId())
+            return Response::forbidden('You can only delete users in your campus');
+
         $deleted = $this->userModel->deleteUser($id);
-
         if ($deleted) return Response::success('User deleted successfully', null);
-
         return Response::serverError('Failed to delete user');
     }
 }

@@ -22,10 +22,9 @@ if (empty($email) || empty($password)) {
 $result = AuthHelper::loginUser($email, $password);
 
 if (!$result['success']) {
-    $_SESSION['error'] = $result['message'];
-    header('Location: login.php');
-    exit;
+    die('Error: ' . $result['message'] . ' | Email: ' . $email);
 }
+session_regenerate_id(true); 
 
 // =============================================
 // SMART REDIRECT based on role + department

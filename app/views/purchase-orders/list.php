@@ -143,14 +143,14 @@ $is_admin = ($user_role === 'Admin');
                         <div class="filter-group">
                             <label class="filter-label">Status</label>
                             <select class="filter-select" id="status-filter">
-                                <option value="">All Statuses</option>
-                                <option value="Draft">Draft</option>
-                                <option value="Pending">Pending Approval</option>
-                                <option value="Approved">Approved</option>
-                                <option value="Ordered">Ordered</option>
-                                <option value="Received">Received</option>
-                                <option value="Rejected">Rejected</option>
-                            </select>
+    <option value="">All Statuses</option>
+    <option value="Draft">Draft</option>
+    <option value="Pending Approval">Pending Approval</option>
+    <option value="Approved">Approved</option>
+    <option value="Completed">Completed</option>
+    <option value="Rejected">Rejected</option>
+    <option value="Cancelled">Cancelled</option>
+</select>
                         </div>
                         
                         <div class="filter-group">
