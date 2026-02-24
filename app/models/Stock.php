@@ -218,7 +218,7 @@ class Stock {
     }
     
     /**
-     * Count low stock items
+     * Count low stock items//happening now
      * 
      * @param int|null $campus_id
      * @return int

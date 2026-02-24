@@ -91,7 +91,7 @@ class TicketController {
 
     public function update() {
         if (!Auth::check())    return Response::unauthorized();
-        if (!Request::isPut() && !Request::isPatch()) return Response::methodNotAllowed('PUT, PATCH');
+        if (!Request::isPost() && !Request::isPut() && !Request::isPatch()) return Response::methodNotAllowed('POST, PUT, PATCH');
 
         $input = Request::json();
         if (empty($input['id'])) return Response::error('Ticket ID is required', 400);
