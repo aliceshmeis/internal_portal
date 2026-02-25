@@ -10,25 +10,10 @@ $user_role = $_SESSION['role'];
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Tickets - Internal Portal</title>
+    <title>My Requests - Internal Portal</title>
     <link rel="stylesheet" href="/internal_portal/public/css/main-style.css">
     <link rel="stylesheet" href="/internal_portal/public/css/admin-layout.css">
     <link rel="stylesheet" href="/internal_portal/public/css/staff-dashboard.css">
-    <style>
-        .sidebar { transition: width 0.25s ease; }
-        .sidebar-collapsed { width: 0 !important; overflow: hidden !important; padding: 0 !important; }
-        .pending-reply-hint {
-            font-size: 11px;
-            color: #d97706;
-            font-weight: 600;
-            margin-top: 3px;
-            display: flex;
-            align-items: center;
-            gap: 3px;
-        }
-        tr.has-pending { background: #fffdf0; }
-        tr.has-pending:hover { background: #fff8e1 !important; }
-    </style>
 </head>
 <body>
 <div class="mobile-overlay" id="mobileOverlay"></div>
@@ -47,7 +32,11 @@ $user_role = $_SESSION['role'];
                 </a>
                 <a href="my-tickets.php" class="sidebar-nav-item active">
                     <span class="sidebar-nav-icon icon-tickets"></span>
-                    <span class="sidebar-nav-text">My Tickets</span>
+                    <span class="sidebar-nav-text">My Requests</span>
+                </a>
+                <a href="assigned.php" class="sidebar-nav-item">
+                    <span class="sidebar-nav-icon icon-tickets"></span>
+                    <span class="sidebar-nav-text">Assigned To Me</span>
                 </a>
                 <a href="../assets/my-assets.php" class="sidebar-nav-item">
                     <span class="sidebar-nav-icon icon-assets"></span>
@@ -70,7 +59,7 @@ $user_role = $_SESSION['role'];
                 <div class="breadcrumb">
                     <a href="../dashboard/staff-dashboard.php" class="breadcrumb-item">Home</a>
                     <span class="breadcrumb-separator">/</span>
-                    <span class="breadcrumb-item active">My Tickets</span>
+                    <span class="breadcrumb-item active">My Requests</span>
                 </div>
             </div>
             <div class="topbar-right">
@@ -85,18 +74,17 @@ $user_role = $_SESSION['role'];
         </div>
 
         <div class="page-content">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+            <div class="page-header-row">
                 <div>
-                    <h1 style="font-size:24px;font-weight:600;color:var(--color-text-primary);margin-bottom:4px;">My Tickets</h1>
-                    <p style="font-size:14px;color:var(--color-text-secondary);">All tickets you have submitted</p>
+                    <h1 class="page-title">My Requests</h1>
+                    <p class="page-subtitle">All tickets you have submitted</p>
                 </div>
                 <button class="btn-create-small" onclick="window.location.href='create.php'">+ New Ticket</button>
             </div>
 
-            <!-- Filters -->
-            <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
-                <input type="text" id="searchInput" placeholder="Search tickets..." style="flex:1;min-width:200px;padding:9px 14px;border:1px solid var(--color-border-light);border-radius:8px;font-size:13px;background:var(--color-bg-primary);color:var(--color-text-primary);">
-                <select id="statusFilter" style="padding:9px 14px;border:1px solid var(--color-border-light);border-radius:8px;font-size:13px;background:var(--color-bg-primary);color:var(--color-text-primary);">
+            <div class="filters-row">
+                <input type="text" id="searchInput" placeholder="Search tickets..." class="filter-input">
+                <select id="statusFilter" class="filter-select">
                     <option value="">All Statuses</option>
                     <option value="Open">Open</option>
                     <option value="In Progress">In Progress</option>
@@ -106,20 +94,17 @@ $user_role = $_SESSION['role'];
                 </select>
             </div>
 
-            <!-- Table -->
             <div class="section-card">
                 <div id="ticketsLoading" class="loading-small">Loading tickets...</div>
                 <div id="ticketsEmpty" style="display:none;">
                     <div class="empty-clean">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
                         <p>No tickets found</p>
                         <button class="btn-create-small" onclick="window.location.href='create.php'">Create Your First Ticket</button>
                     </div>
                 </div>
                 <div id="ticketsTable" style="display:none;">
-                    <table class="tickets-table-clean" style="margin:0;">
+                    <table class="tickets-table-clean">
                         <thead>
                             <tr>
                                 <th style="padding:12px 20px;">ID</th>
@@ -140,23 +125,20 @@ $user_role = $_SESSION['role'];
 
 <script src="/internal_portal/public/js/mobile-menu.js"></script>
 <script>
-    const hamburger = document.getElementById('hamburgerMenu');
-    const sidebar   = document.getElementById('sidebar');
-    hamburger.addEventListener('click', () => sidebar.classList.toggle('sidebar-collapsed'));
-    document.getElementById('mobileOverlay').addEventListener('click', () => sidebar.classList.remove('sidebar-collapsed'));
-</script>
-<script>
 const API_BASE = '/internal_portal/api/v1';
 let allTickets = [];
 
 document.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('status')) {
-        document.getElementById('statusFilter').value = params.get('status');
-    }
+    if (params.get('status')) document.getElementById('statusFilter').value = params.get('status');
     loadTickets();
     document.getElementById('searchInput').addEventListener('input', renderTable);
     document.getElementById('statusFilter').addEventListener('change', renderTable);
+
+    const hamburger = document.getElementById('hamburgerMenu');
+    const sidebar   = document.getElementById('sidebar');
+    hamburger.addEventListener('click', () => sidebar.classList.toggle('sidebar-collapsed'));
+    document.getElementById('mobileOverlay').addEventListener('click', () => sidebar.classList.remove('sidebar-collapsed'));
 });
 
 async function loadTickets() {
@@ -174,24 +156,21 @@ async function loadTickets() {
 function renderTable() {
     const search = document.getElementById('searchInput').value.toLowerCase();
     const status = document.getElementById('statusFilter').value;
-
     const filtered = allTickets.filter(t => {
-        const matchSearch = !search || t.title.toLowerCase().includes(search);
-        const matchStatus = !status || t.status === status;
-        return matchSearch && matchStatus;
+        return (!search || t.title.toLowerCase().includes(search)) &&
+               (!status || t.status === status);
     });
 
-    if (filtered.length === 0) {
+    if (!filtered.length) {
         document.getElementById('ticketsTable').style.display = 'none';
         document.getElementById('ticketsEmpty').style.display = 'block';
         return;
     }
-
     document.getElementById('ticketsEmpty').style.display = 'none';
     document.getElementById('ticketsTable').style.display  = 'block';
 
     document.getElementById('ticketsTbody').innerHTML = filtered.map(t => `
-        <tr onclick="viewTicket(${t.id})" style="cursor:pointer;" class="${t.status === 'Pending' ? 'has-pending' : ''}">
+        <tr onclick="window.location.href='view.php?id=${t.id}'" style="cursor:pointer;" class="${t.status === 'Pending' ? 'has-pending' : ''}">
             <td style="padding:13px 20px;"><span class="ticket-id-clean">#T-${String(t.id).padStart(4,'0')}</span></td>
             <td style="padding:13px 20px;"><span class="ticket-title-clean">${escapeHtml(t.title)}</span></td>
             <td style="padding:13px 20px;"><span style="font-size:13px;color:var(--color-text-secondary);">${escapeHtml(t.category || '—')}</span></td>
@@ -205,34 +184,25 @@ function renderTable() {
     `).join('');
 }
 
-function getStatusBadge(status) {
-    const map = { 'Open':'badge-open','In Progress':'badge-in-progress','Pending':'badge-pending','Resolved':'badge-resolved','Closed':'badge-resolved' };
-    return `<span class="badge-clean ${map[status]||'badge-open'}">${status}</span>`;
+function getStatusBadge(s) {
+    const m = {'Open':'badge-open','In Progress':'badge-in-progress','Pending':'badge-pending','Resolved':'badge-resolved','Closed':'badge-closed'};
+    return `<span class="badge-clean ${m[s]||'badge-open'}">${s}</span>`;
 }
-
-function getPriorityBadge(priority) {
-    const map = { 'Low':'#6b7280','Medium':'#3b82f6','High':'#f97316','Critical':'#ef4444' };
-    const color = map[priority] || '#6b7280';
-    return `<span style="font-size:11px;font-weight:600;color:${color};">${priority || '—'}</span>`;
+function getPriorityBadge(p) {
+    const m = {'Low':'#6b7280','Medium':'#3b82f6','High':'#f97316','Critical':'#ef4444'};
+    return `<span style="font-size:11px;font-weight:600;color:${m[p]||'#6b7280'};">${p||'—'}</span>`;
 }
-
 function formatDate(d) {
+    if (!d) return '—';
     const date = new Date(d), now = new Date();
     const days = Math.floor((now - date) / 86400000);
-    if (days === 0) return 'Today';
-    if (days === 1) return 'Yesterday';
-    if (days < 7)  return `${days}d ago`;
-    return date.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+    if (days === 0) return 'Today'; if (days === 1) return 'Yesterday';
+    if (days < 7) return `${days}d ago`;
+    return date.toLocaleDateString('en-US', {month:'short',day:'numeric'});
 }
-
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-function viewTicket(id) {
-    window.location.href = `view.php?id=${id}`;
+function escapeHtml(t) {
+    if (!t) return '—';
+    const d = document.createElement('div'); d.textContent = t; return d.innerHTML;
 }
 </script>
 </body>

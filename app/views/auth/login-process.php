@@ -29,23 +29,13 @@ session_regenerate_id(true);
 // =============================================
 // SMART REDIRECT based on role + department
 // =============================================
-$role            = $_SESSION['role'] ?? '';
-$department_name = $_SESSION['department_name'] ?? '';
+$role = $_SESSION['role'] ?? '';
 
 if ($role === 'Admin') {
-    // Admins → admin dashboard
     header('Location: /internal_portal/app/views/dashboard/dashboard.php');
-
-} elseif ($role === 'Staff' && strtoupper($department_name) === 'IT') {
-    // IT Staff → IT dashboard
-    header('Location: /internal_portal/app/views/it/it-dashboard.php');
-
 } elseif ($role === 'Asset Manager') {
-    // Asset Managers → asset manager dashboard
     header('Location: /internal_portal/app/views/asset_manager/dashboard.php');
-
 } else {
-    // All other staff → staff dashboard
     header('Location: /internal_portal/app/views/dashboard/staff-dashboard.php');
 }
 

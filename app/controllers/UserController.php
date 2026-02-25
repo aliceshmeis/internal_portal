@@ -113,7 +113,7 @@ class UserController {
         return Response::serverError('Failed to update user');
     }
 
-    public function itList() {
+   public function itList() {
     if (!Auth::check())    return Response::unauthorized();
     if (!Auth::isAdmin())  return Response::forbidden('Access denied');
     if (!Request::isGet()) return Response::methodNotAllowed('GET');
@@ -123,18 +123,17 @@ class UserController {
         $stmt = $db->prepare(
             "SELECT u.id, u.name, u.email, u.role, c.campus_name
              FROM users u
-             LEFT JOIN campuses c    ON c.id = u.campus_id
-             LEFT JOIN departments d ON d.id = u.department_id
+             LEFT JOIN campuses c ON c.id = u.campus_id
              WHERE u.is_active = 1
                AND u.campus_id = :campus_id
-               AND d.name = 'IT'
+               AND u.role = 'Staff'
              ORDER BY u.name ASC"
         );
         $stmt->execute([':campus_id' => Auth::campusId()]);
         $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        return Response::success('IT staff retrieved', $users, 200, ['count' => count($users)]);
+        return Response::success('Staff retrieved', $users, 200, ['count' => count($users)]);
     } catch (Exception $e) {
-        return Response::serverError('Failed to retrieve IT staff');
+        return Response::serverError('Failed to retrieve staff');
     }
 }
 

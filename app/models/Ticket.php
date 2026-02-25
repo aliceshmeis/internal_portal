@@ -434,6 +434,25 @@ public static function getByUser($user_id) {
             return [];
         }
     }
+    public static function getAssignedTo($user_id) {
+    try {
+        $db   = (new Database())->getConnection();
+        $stmt = $db->prepare("
+            SELECT t.id, t.ticket_number, t.title, t.status, t.priority,
+                   t.category, t.created_at, t.updated_at,
+                   u.name AS creator_name
+            FROM tickets t
+            LEFT JOIN users u ON t.created_by = u.id
+            WHERE t.assigned_to = :user_id
+              AND t.status NOT IN ('Closed', 'Resolved')
+            ORDER BY t.updated_at DESC
+        ");
+        $stmt->execute([':user_id' => $user_id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        return [];
+    }
+}
     /**
      * Get ticket counts grouped by status
      */

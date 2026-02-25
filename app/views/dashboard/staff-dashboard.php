@@ -33,7 +33,11 @@ $first_name = explode(' ', $user_name)[0];
                 </a>
                 <a href="../tickets/my-tickets.php" class="sidebar-nav-item">
                     <span class="sidebar-nav-icon icon-tickets"></span>
-                    <span class="sidebar-nav-text">My Tickets</span>
+                    <span class="sidebar-nav-text">My Requests</span>
+                </a>
+                <a href="../tickets/assigned.php" class="sidebar-nav-item">
+                    <span class="sidebar-nav-icon icon-tickets"></span>
+                    <span class="sidebar-nav-text">Assigned To Me</span>
                 </a>
                 <a href="../assets/my-assets.php" class="sidebar-nav-item">
                     <span class="sidebar-nav-icon icon-assets"></span>
@@ -61,10 +65,10 @@ $first_name = explode(' ', $user_name)[0];
             </div>
             <div class="topbar-right">
                 <div class="header-user">
-                    <div class="header-user-avatar"><?php echo strtoupper(substr($user_name, 0, 1)); ?></div>
+                    <div class="header-user-avatar"><?= strtoupper(substr($user_name,0,1)) ?></div>
                     <div class="header-user-info">
-                        <div class="header-user-name"><?php echo htmlspecialchars($user_name); ?></div>
-                        <div class="header-user-role"><?php echo htmlspecialchars($user_role); ?></div>
+                        <div class="header-user-name"><?= htmlspecialchars($user_name) ?></div>
+                        <div class="header-user-role"><?= htmlspecialchars($user_role) ?></div>
                     </div>
                 </div>
             </div>
@@ -73,83 +77,129 @@ $first_name = explode(' ', $user_name)[0];
         <div class="page-content">
 
             <div class="action-header">
-                <h1>What's the issue today, <?php echo htmlspecialchars($first_name); ?>?</h1>
-                <p>Select a category to quickly create a ticket</p>
+                <h1>What's the issue today, <?= htmlspecialchars($first_name) ?>?</h1>
+                <p>Create a ticket or check your assigned requests.</p>
             </div>
 
-            <div class="counters-row">
-                <div class="counter-card" onclick="goToTickets('Open')" title="View Open Tickets">
-                    <div class="counter-dot blue"></div>
-                    <div class="counter-info">
-                        <div class="counter-value" id="counterOpen">—</div>
-                        <div class="counter-label">Open</div>
-                    </div>
-                    <span class="counter-arrow">→</span>
-                </div>
-                <div class="counter-card" onclick="goToTickets('In Progress')" title="View In Progress Tickets">
-                    <div class="counter-dot orange"></div>
-                    <div class="counter-info">
-                        <div class="counter-value" id="counterInProgress">—</div>
-                        <div class="counter-label">In Progress</div>
-                    </div>
-                    <span class="counter-arrow">→</span>
-                </div>
-                <div class="counter-card" onclick="goToTickets('Pending')" title="View Pending Tickets">
-                    <div class="counter-dot purple"></div>
-                    <div class="counter-info">
-                        <div class="counter-value" id="counterPending">—</div>
-                        <div class="counter-label">Pending</div>
-                    </div>
-                    <span class="counter-arrow">→</span>
-                </div>
-            </div>
-
-            <div class="action-grid">
-                <div class="action-card-large" onclick="createTicket('IT & Software')">
-                    <div class="card-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg></div>
-                    <div class="card-title">IT & Software</div>
-                    <div class="card-description">Software issues, access problems</div>
-                </div>
-                <div class="action-card-large" onclick="createTicket('Printer Issue')">
-                    <div class="card-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg></div>
-                    <div class="card-title">Printer Issue</div>
-                    <div class="card-description">Printing problems, paper jams</div>
-                </div>
-                <div class="action-card-large" onclick="createTicket('Network Problem')">
-                    <div class="card-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="2"></circle><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"></path></svg></div>
-                    <div class="card-title">Network Problem</div>
-                    <div class="card-description">WiFi, internet connectivity</div>
-                </div>
-                <div class="action-card-large" onclick="createTicket('Hardware Issue')">
-                    <div class="card-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg></div>
-                    <div class="card-title">Hardware Issue</div>
-                    <div class="card-description">Equipment malfunction, damage</div>
-                </div>
-                <div class="action-card-large" onclick="createTicket('Access Request')">
-                    <div class="card-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></div>
-                    <div class="card-title">Access Request</div>
-                    <div class="card-description">System access, permissions</div>
-                </div>
-                <div class="action-card-large" onclick="createTicket('Item Request')">
-                    <div class="card-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg></div>
-                    <div class="card-title">Item Request</div>
-                    <div class="card-description">Request supplies, equipment</div>
-                </div>
-            </div>
-
-            <div class="action-banner" id="actionBanner" style="display:none;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <!-- Pending Banner -->
+            <div class="action-banner" id="actionBanner">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2">
                     <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
                     <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
                 </svg>
                 <span id="bannerText"></span>
-                <a href="../tickets/my-tickets.php?status=Pending">View Tickets →</a>
+                <a href="../tickets/my-tickets.php?status=Pending">View Pending →</a>
+            </div>
+
+            <!-- Counters -->
+            <div class="counters-row">
+                <div class="counter-card" onclick="goToTickets()" title="My Requests">
+                    <div class="counter-dot blue"></div>
+                    <div class="counter-info">
+                        <div class="counter-value" id="counterMyRequests">—</div>
+                        <div class="counter-label">My Requests</div>
+                    </div>
+                    <span class="counter-arrow">→</span>
+                </div>
+                <div class="counter-card" onclick="goToAssigned()" title="Assigned To Me">
+                    <div class="counter-dot orange"></div>
+                    <div class="counter-info">
+                        <div class="counter-value" id="counterAssigned">—</div>
+                        <div class="counter-label">Assigned To Me</div>
+                    </div>
+                    <span class="counter-arrow">→</span>
+                </div>
+                <div class="counter-card" onclick="goToTickets('Pending')" title="Pending My Reply">
+                    <div class="counter-dot yellow"></div>
+                    <div class="counter-info">
+                        <div class="counter-value" id="counterPending">—</div>
+                        <div class="counter-label">Pending My Reply</div>
+                    </div>
+                    <span class="counter-arrow">→</span>
+                </div>
+            </div>
+
+            <!-- Category Cards -->
+            <div class="section-title">Submit a Request</div>
+            <div class="action-grid">
+                <div class="action-card-large" onclick="createTicket('IT & Systems')">
+                    <div class="card-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg></div>
+                    <div class="card-title">IT & Systems</div>
+                    <div class="card-description">Login, email, network, hardware</div>
+                </div>
+                <div class="action-card-large" onclick="createTicket('Registrar Services')">
+                    <div class="card-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg></div>
+                    <div class="card-title">Registrar</div>
+                    <div class="card-description">Enrollment, transcripts, records</div>
+                </div>
+                <div class="action-card-large" onclick="createTicket('Human Resources')">
+                    <div class="card-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></div>
+                    <div class="card-title">Human Resources</div>
+                    <div class="card-description">Payroll, leave, HR documents</div>
+                </div>
+                <div class="action-card-large" onclick="createTicket('Finance')">
+                    <div class="card-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></div>
+                    <div class="card-title">Finance</div>
+                    <div class="card-description">Tuition, invoices, refunds</div>
+                </div>
+                <div class="action-card-large" onclick="createTicket('Academic Request')">
+                    <div class="card-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg></div>
+                    <div class="card-title">Academic Request</div>
+                    <div class="card-description">Course override, grade, approvals</div>
+                </div>
+                <div class="action-card-large" onclick="createTicket('Facilities')">
+                    <div class="card-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></div>
+                    <div class="card-title">Facilities</div>
+                    <div class="card-description">Classroom, AC, electrical</div>
+                </div>
+                <div class="action-card-large" onclick="createTicket('Library')">
+                    <div class="card-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg></div>
+                    <div class="card-title">Library</div>
+                    <div class="card-description">Borrowing, resources, account</div>
+                </div>
+                <div class="action-card-large" onclick="createTicket('Student Affairs')">
+                    <div class="card-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>
+                    <div class="card-title">Student Affairs</div>
+                    <div class="card-description">Activities, student ID, support</div>
+                </div>
+            </div>
+
+            <!-- Two Tables -->
+            <div class="tables-grid">
+                <div class="table-section">
+                    <div class="table-section-header">
+                        <span class="table-section-title">🟧 Assigned To Me</span>
+                        <a href="../tickets/assigned.php" class="table-view-all">View All →</a>
+                    </div>
+                    <div class="table-section-body">
+                        <div id="assignedLoading" class="mini-table-empty">Loading...</div>
+                        <div id="assignedEmpty" class="mini-table-empty" style="display:none;">No tickets assigned to you.</div>
+                        <table class="mini-table" id="assignedTable" style="display:none;">
+                            <thead><tr><th>Ticket</th><th>Subject</th><th>Status</th><th>From</th></tr></thead>
+                            <tbody id="assignedTbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="table-section">
+                    <div class="table-section-header">
+                        <span class="table-section-title">🟦 My Recent Requests</span>
+                        <a href="../tickets/my-tickets.php" class="table-view-all">View All →</a>
+                    </div>
+                    <div class="table-section-body">
+                        <div id="requestsLoading" class="mini-table-empty">Loading...</div>
+                        <div id="requestsEmpty" class="mini-table-empty" style="display:none;">No tickets submitted yet.</div>
+                        <table class="mini-table" id="requestsTable" style="display:none;">
+                            <thead><tr><th>Ticket</th><th>Subject</th><th>Status</th><th>Updated</th></tr></thead>
+                            <tbody id="requestsTbody"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
         </div>
     </main>
 </div>
-<!-- mobile-menu.js handles ALL sidebar toggling — no extra script needed -->
+
 <script src="/internal_portal/public/js/mobile-menu.js"></script>
 <script src="/internal_portal/public/js/staff-dashboard.js"></script>
 </body>
