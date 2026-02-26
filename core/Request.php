@@ -7,7 +7,7 @@ class Request {
      * @return array
      */
     public static function json() {
-        $input = file_get_contents('php://input');
+        $input = file_get_contents('php://input');//This reads the raw HTTP request body.
         return json_decode($input, true) ?? [];
     }
     

@@ -10,17 +10,17 @@ class TicketController {
         if (!Auth::check())     return Response::unauthorized();
         if (!Request::isPost()) return Response::methodNotAllowed('POST');
 
-        $input = Request::json();
+        $input = Request::json();// read the request body as Json
 
-        if (empty($input['title']))       return Response::error('Title is required', 400);
-        if (empty($input['description'])) return Response::error('Description is required', 400);
+        if (empty($input['title']))       return Response::error('Title is required', 400);//Ticket cannot be created without title
+        if (empty($input['description'])) return Response::error('Description is required', 400);// without desciption
 
-        $allowed_priorities = ['Low', 'Medium', 'High', 'Critical'];
-        $priority = $input['priority'] ?? 'Medium';
+        $allowed_priorities = ['Low', 'Medium', 'High', 'Critical'];//allowed prioreties
+        $priority = $input['priority'] ?? 'Medium';//medium by default
         if (!in_array($priority, $allowed_priorities))
             return Response::error('Invalid priority. Allowed: ' . implode(', ', $allowed_priorities), 400);
 
-        $campus_id = $input['campus_id'] ?? Auth::campusId();
+        $campus_id = $input['campus_id'] ?? Auth::campusId();//use campus id other wise the campus id of the user logged in
         if (empty($campus_id)) return Response::error('Campus not found for this user', 400);
 
         $data = [
