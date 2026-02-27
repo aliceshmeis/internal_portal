@@ -1,0 +1,476 @@
+/* ═══════════════════════════════════════════════════════
+   SUBTASK STYLES — subtask.css
+   Used by: detail.php, assigned.php
+   ═══════════════════════════════════════════════════════ */
+
+/* ── SECTION HEADER ── */
+.subtask-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.subtask-count-badge {
+    font-size: 12px;
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-left: 8px;
+}
+
+.btn-add-subtask {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: var(--color-primary);
+    color: #fff;
+    border: none;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.btn-add-subtask:hover { background: var(--color-primary-hover); }
+
+/* ── SUBTASK LIST ── */
+.subtask-list { display: flex; flex-direction: column; gap: 10px; }
+
+.subtask-empty {
+    text-align: center;
+    padding: 28px 0;
+    color: var(--color-text-secondary);
+    font-size: 13.5px;
+}
+
+/* ── SUBTASK ITEM CARD ── */
+.subtask-item {
+    border: 1px solid var(--color-border-light);
+    border-radius: 10px;
+    padding: 14px 16px;
+    background: #fff;
+    transition: box-shadow 0.15s;
+}
+.subtask-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+
+.subtask-item-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.subtask-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.subtask-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    margin-bottom: 10px;
+}
+
+/* ── SUBTASK STATUS BADGES ── */
+.subtask-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 9px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.subtask-status.status-open        { background: #dbeafe; color: #1d4ed8; }
+.subtask-status.status-in-progress { background: #fef3c7; color: #b45309; }
+.subtask-status.status-done        { background: #dcfce7; color: #166534; }
+
+/* ── ASSIGNEE CHIPS ── */
+.subtask-assignees {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.subtask-assignee-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-light);
+    border-radius: 20px;
+    font-size: 12px;
+    color: var(--color-text-primary);
+}
+
+.assignee-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.dot-assigned    { background: #9ca3af; }
+.dot-in-progress { background: #f59e0b; }
+.dot-done        { background: #10b981; }
+
+/* ── DUE DATE ── */
+.subtask-due { font-size: 11.5px; color: var(--color-text-muted); }
+.subtask-due.overdue { color: #ef4444; font-weight: 600; }
+
+/* ── MY STATUS ROW ── */
+.my-status-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+.my-status-label { font-size: 12px; color: var(--color-text-secondary); }
+.my-status-select {
+    padding: 4px 10px;
+    border: 1px solid var(--color-border-medium);
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-family: inherit;
+    outline: none;
+    cursor: pointer;
+}
+.btn-my-status {
+    padding: 4px 12px;
+    background: var(--color-primary);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* ── COMMENTS TOGGLE ── */
+.btn-subtask-expand {
+    background: none;
+    border: none;
+    font-size: 12px;
+    color: var(--color-primary);
+    cursor: pointer;
+    padding: 0;
+    font-weight: 500;
+}
+.btn-subtask-expand:hover { text-decoration: underline; }
+
+/* ── COMMENTS AREA ── */
+.subtask-comments-area {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--color-border-light);
+    display: none;
+}
+.subtask-comments-area.open { display: block; }
+
+.subtask-comment-item {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--color-border-light);
+}
+.subtask-comment-item:last-child { border-bottom: none; }
+
+.subtask-comment-meta {
+    font-size: 11.5px;
+    color: var(--color-text-secondary);
+    margin-bottom: 3px;
+}
+.subtask-comment-text {
+    font-size: 13px;
+    color: var(--color-text-primary);
+}
+
+.subtask-comment-form {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+.subtask-comment-input {
+    flex: 1;
+    padding: 7px 11px;
+    border: 1px solid var(--color-border-medium);
+    border-radius: 7px;
+    font-size: 13px;
+    font-family: inherit;
+    resize: none;
+    outline: none;
+}
+.subtask-comment-input:focus { border-color: var(--color-primary); }
+
+.btn-subtask-comment {
+    padding: 7px 13px;
+    background: var(--color-primary);
+    color: #fff;
+    border: none;
+    border-radius: 7px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════════════════
+   ADD SUBTASK MODAL
+   ═══════════════════════════════════════════════════════ */
+.subtask-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10,15,30,0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 500;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+}
+.subtask-modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.subtask-modal {
+    background: #fff;
+    border-radius: 14px;
+    width: 100%;
+    max-width: 520px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    transform: translateY(10px);
+    transition: transform 0.2s;
+}
+.subtask-modal-overlay.open .subtask-modal { transform: translateY(0); }
+
+.subtask-modal-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--color-border-light);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.subtask-modal-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+.subtask-modal-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    line-height: 1;
+    padding: 2px;
+}
+.subtask-modal-close:hover { color: var(--color-text-primary); }
+
+.subtask-modal-body { padding: 20px 24px; }
+
+.sm-form-group { margin-bottom: 16px; }
+.sm-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: 6px;
+}
+.sm-label span { color: #ef4444; margin-left: 2px; }
+
+.sm-input, .sm-textarea, .sm-select {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--color-border-medium);
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-family: inherit;
+    color: var(--color-text-primary);
+    outline: none;
+    background: var(--color-bg-secondary);
+    transition: border-color 0.15s;
+    box-sizing: border-box;
+}
+.sm-input:focus, .sm-textarea:focus, .sm-select:focus {
+    border-color: var(--color-primary);
+    background: #fff;
+}
+.sm-textarea { resize: vertical; min-height: 80px; }
+
+/* Department type toggle */
+.sm-type-toggle {
+    display: flex;
+    gap: 8px;
+}
+.sm-type-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--color-border-medium);
+    border-radius: 8px;
+    background: var(--color-bg-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+}
+.sm-type-btn.active {
+    border-color: var(--color-primary);
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+}
+
+/* User checklist */
+.sm-user-list {
+    border: 1px solid var(--color-border-medium);
+    border-radius: 8px;
+    max-height: 160px;
+    overflow-y: auto;
+    background: var(--color-bg-secondary);
+}
+.sm-user-placeholder {
+    padding: 14px 12px;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    text-align: center;
+}
+.sm-user-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-bottom: 1px solid var(--color-border-light);
+}
+.sm-user-item:last-child { border-bottom: none; }
+.sm-user-item:hover { background: #f0f7ff; }
+.sm-user-item input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    accent-color: var(--color-primary);
+    flex-shrink: 0;
+}
+.sm-user-name { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+.sm-user-role { font-size: 11px; color: var(--color-text-secondary); margin-left: auto; }
+
+.sm-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.subtask-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--color-border-light);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+.btn-sm-cancel {
+    padding: 9px 18px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-medium);
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--color-text-primary);
+}
+.btn-sm-submit {
+    padding: 9px 20px;
+    background: var(--color-primary);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.btn-sm-submit:hover    { background: var(--color-primary-hover); }
+.btn-sm-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ═══════════════════════════════════════════════════════
+   ASSIGNED.PHP — MY SUBTASKS TABLE
+   ═══════════════════════════════════════════════════════ */
+.assigned-section-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--color-border-light);
+}
+.assigned-section-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+.assigned-section-badge {
+    padding: 2px 9px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 700;
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+}
+.assigned-section-badge.orange {
+    background: #fff7ed;
+    color: #c2410c;
+}
+
+.my-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 600;
+    border: 1px solid var(--color-border-medium);
+    background: var(--color-bg-secondary);
+}
+.status-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+.due-label { font-size: 11.5px; color: var(--color-text-secondary); }
+.due-label.overdue { color: #ef4444; font-weight: 600; }
+
+.btn-update-status {
+    padding: 4px 11px;
+    background: var(--color-primary);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.subtask-status-select {
+    padding: 4px 8px;
+    border: 1px solid var(--color-border-medium);
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: inherit;
+    outline: none;
+}
+.subtask-table-th {
+    padding: 10px 20px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+.subtask-table-td { padding: 13px 20px; border-bottom: 1px solid var(--color-border-light); }

@@ -26,6 +26,7 @@ if (!$ticket_id) {
     <link rel="stylesheet" href="/internal_portal/public/css/main-style.css">
     <link rel="stylesheet" href="/internal_portal/public/css/admin-layout.css">
     <link rel="stylesheet" href="/internal_portal/public/css/ticket-detail.css">
+    <link rel="stylesheet" href="/internal_portal/public/css/subtask.css">
 </head>
 <body>
 <div class="mobile-overlay" id="mobileOverlay"></div>
@@ -33,7 +34,8 @@ if (!$ticket_id) {
 
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <img src="/internal_portal/public/images/liulogo.png" alt="LIU" style="height:36px;object-fit:contain;">            <div class="sidebar-title">Internal Portal</div>
+            <img src="/internal_portal/public/images/liulogo.png" alt="LIU" style="height:36px;object-fit:contain;">
+            <div class="sidebar-title">Internal Portal</div>
         </div>
         <nav class="sidebar-nav">
             <div class="sidebar-nav-section">
@@ -136,8 +138,8 @@ if (!$ticket_id) {
                                 <span>Created <strong id="td-created-meta"></strong></span>
                             </div>
                             <div class="td-badges">
-                                <span id="td-status"        class="status-badge"></span>
-                                <span id="td-priority"      class="priority-badge"></span>
+                                <span id="td-status"         class="status-badge"></span>
+                                <span id="td-priority"       class="priority-badge"></span>
                                 <span id="td-category-badge" class="category-badge" style="display:none;"></span>
                             </div>
                         </div>
@@ -215,6 +217,22 @@ if (!$ticket_id) {
                         <div class="td-card" id="td-attachments-section" style="display:none;">
                             <div class="td-card-title">Attachments</div>
                             <div id="td-attachments" class="td-attachments"></div>
+                        </div>
+
+                        <!-- SUBTASKS -->
+                        <div class="td-card subtask-section" id="subtask-section">
+                            <div class="subtask-section-header">
+                                <div style="display:flex;align-items:center;">
+                                    <div class="td-card-title" style="margin:0;">Subtasks</div>
+                                    <span class="subtask-count-badge" id="subtask-count">0</span>
+                                </div>
+                                <?php if ($is_admin): ?>
+                                <button class="btn-add-subtask" onclick="openSubtaskModal()">+ Add Subtask</button>
+                                <?php endif; ?>
+                            </div>
+                            <div class="subtask-list" id="subtask-list">
+                                <div class="subtask-empty">No subtasks yet.</div>
+                            </div>
                         </div>
 
                         <!-- Activity Timeline -->
@@ -319,11 +337,73 @@ if (!$ticket_id) {
     </main>
 </div>
 
+<!-- ── ADD SUBTASK MODAL ── -->
+<?php if ($is_admin): ?>
+<div class="subtask-modal-overlay" id="subtaskModalOverlay">
+    <div class="subtask-modal">
+        <div class="subtask-modal-header">
+            <div class="subtask-modal-title">Add Subtask</div>
+            <button class="subtask-modal-close" onclick="closeSubtaskModal()">&#x2715;</button>
+        </div>
+        <div class="subtask-modal-body">
+            <div class="sm-form-group">
+                <label class="sm-label">Title <span>*</span></label>
+                <input type="text" id="sm-title" class="sm-input" placeholder="e.g. Prepare financial report">
+            </div>
+            <div class="sm-form-group">
+                <label class="sm-label">Description</label>
+                <textarea id="sm-description" class="sm-textarea" placeholder="Optional details..."></textarea>
+            </div>
+            <div class="sm-row">
+                <div class="sm-form-group">
+                    <label class="sm-label">Priority</label>
+                    <select id="sm-priority" class="sm-select">
+                        <option value="">Inherit from ticket</option>
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                        <option value="Critical">Critical</option>
+                    </select>
+                </div>
+                <div class="sm-form-group">
+                    <label class="sm-label">Due Date</label>
+                    <input type="date" id="sm-due-date" class="sm-input">
+                </div>
+            </div>
+            <div class="sm-form-group">
+                <label class="sm-label">Department Type <span>*</span></label>
+                <div class="sm-type-toggle">
+                    <button type="button" class="sm-type-btn" data-type="academic"       onclick="selectDeptType('academic')">Academic</button>
+                    <button type="button" class="sm-type-btn" data-type="administrative" onclick="selectDeptType('administrative')">Administrative</button>
+                </div>
+            </div>
+            <div class="sm-form-group" id="sm-dept-group" style="display:none;">
+                <label class="sm-label">Department <span>*</span></label>
+                <select id="sm-department" class="sm-select" onchange="onDepartmentChange()">
+                    <option value="">Select department...</option>
+                </select>
+            </div>
+            <div class="sm-form-group" id="sm-users-group" style="display:none;">
+                <label class="sm-label">Assign Users <span>*</span></label>
+                <div class="sm-user-list" id="sm-user-list">
+                    <div class="sm-user-placeholder">Select a department first.</div>
+                </div>
+            </div>
+        </div>
+        <div class="subtask-modal-footer">
+            <button class="btn-sm-cancel" onclick="closeSubtaskModal()">Cancel</button>
+            <button class="btn-sm-submit" id="btn-sm-submit" onclick="submitSubtask()">Create Subtask</button>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 <script>
     const TICKET_ID   = <?php echo $ticket_id; ?>;
     const IS_ADMIN    = <?php echo $is_admin ? 'true' : 'false'; ?>;
     const API_BASE    = '/internal_portal/api/v1';
     const USER_INIT   = '<?php echo $user_initials; ?>';
+    const CURRENT_USER_ID = <?php echo (int)$_SESSION['user_id']; ?>;
 </script>
 <script src="/internal_portal/public/js/mobile-menu.js"></script>
 <script src="/internal_portal/public/js/ticket-detail.js"></script>
