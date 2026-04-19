@@ -132,5 +132,12 @@ class Auth {
             'is_active' => self::isActive()
         ];
     }
+    public static function isHead() {
+    return isset($_SESSION['is_head']) && $_SESSION['is_head'] == 1;
+}
+
+public static function departmentId() {
+    return $_SESSION['department_id'] ?? null;
+}
 }
 ?>

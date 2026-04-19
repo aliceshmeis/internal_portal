@@ -1,8 +1,63 @@
 const API_BASE = '/internal_portal/api/v1';
 
+// ─── ICON MAP ─────────────────────────────────────────────────────────────────
+const DEPT_ICONS = {
+    'it':                `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg>`,
+    'finance':           `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>`,
+    'hr':                `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>`,
+    'human resources':   `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>`,
+    'library':           `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`,
+    'registrar':         `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>`,
+    'pharmacy':          `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 3H5a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-3"></path><rect x="8" y="1" width="8" height="4" rx="1" ry="1"></rect></svg>`,
+    'engineering':       `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"></circle><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"></path></svg>`,
+    'admissions':        `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>`,
+    'student affairs':   `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`,
+    'school of business':`<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>`,
+    'school of education':`<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>`,
+    'arts':              `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>`,
+    'default':           `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`
+};
+
+function getDeptIcon(name) {
+    const key = (name || '').toLowerCase();
+    for (const [k, v] of Object.entries(DEPT_ICONS)) {
+        if (key.includes(k)) return v;
+    }
+    return DEPT_ICONS['default'];
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+
 document.addEventListener('DOMContentLoaded', () => {
+    loadDepartments();
     loadDashboard();
 });
+
+// ─── LOAD DEPARTMENTS (dynamic cards) ─────────────────────────────────────────
+
+async function loadDepartments() {
+    const grid = document.getElementById('action-grid');
+    try {
+        const res  = await fetch(`${API_BASE}/departments/list.php`, { credentials: 'include' });
+        const data = await res.json();
+
+        if (data.success && data.data.length) {
+            grid.innerHTML = data.data.map(d => `
+                <div class="action-card-large" onclick="createTicket('${escapeAttr(d.name)}', ${d.id})">
+                    <div class="card-icon">${getDeptIcon(d.name)}</div>
+                    <div class="card-title">${escapeHtml(d.name)}</div>
+                    <div class="card-description">${escapeHtml(d.description || '')}</div>
+                </div>`).join('');
+        } else {
+            grid.innerHTML = '<div class="mini-table-empty">No departments found for your campus.</div>';
+        }
+    } catch (e) {
+        console.error('Failed to load departments', e);
+        grid.innerHTML = '<div class="mini-table-empty">Failed to load departments.</div>';
+    }
+}
+
+// ─── LOAD DASHBOARD DATA ──────────────────────────────────────────────────────
 
 async function loadDashboard() {
     try {
@@ -23,14 +78,19 @@ async function loadDashboard() {
     }
 }
 
+// ─── COUNTERS ─────────────────────────────────────────────────────────────────
+
 function renderCounters(myTickets, assignedTickets) {
     const activeMyTickets = myTickets.filter(t => t.status !== 'Closed' && t.status !== 'Resolved');
     const pending         = myTickets.filter(t => t.status === 'Pending');
 
     document.getElementById('counterMyRequests').textContent = activeMyTickets.length;
-    document.getElementById('counterAssigned').textContent   = assignedTickets.length;
+    const activeAssigned = assignedTickets.filter(t => t.status !== 'Resolved');
+    document.getElementById('counterAssigned').textContent   = activeAssigned.length;
     document.getElementById('counterPending').textContent    = pending.length;
 }
+
+// ─── BANNER ───────────────────────────────────────────────────────────────────
 
 function renderActionBanner(myTickets) {
     const pending = myTickets.filter(t => t.status === 'Pending').length;
@@ -43,6 +103,8 @@ function renderActionBanner(myTickets) {
         banner.style.display = 'none';
     }
 }
+
+// ─── TABLES ───────────────────────────────────────────────────────────────────
 
 function renderAssignedTable(tickets) {
     document.getElementById('assignedLoading').style.display = 'none';
@@ -89,8 +151,17 @@ function renderRequestsTable(tickets) {
     `).join('');
 }
 
+// ─── UTILITIES ────────────────────────────────────────────────────────────────
+
 function getStatusBadge(status) {
-    const map = { 'Open':'badge-open','In Progress':'badge-in-progress','Pending':'badge-pending','Resolved':'badge-resolved','Closed':'badge-closed' };
+    const map = {
+        'Open':        'badge-open',
+        'In Progress': 'badge-in-progress',
+        'Pending':     'badge-pending',
+        'Resolved':    'badge-resolved',
+        'Closed':      'badge-closed',
+        'Returned':    'badge-returned'
+    };
     return `<span class="badge-clean ${map[status] || 'badge-open'}">${status}</span>`;
 }
 
@@ -111,12 +182,20 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-function createTicket(category) {
-    window.location.href = `../tickets/create.php?category=${encodeURIComponent(category)}`;
+// Safe for use inside onclick="" attributes
+function escapeAttr(text) {
+    if (!text) return '';
+    return text.replace(/'/g, "\\'");
+}
+
+function createTicket(category, department_id) {
+    let url = `../tickets/create.php?category=${encodeURIComponent(category)}`;
+    if (department_id) url += `&department_id=${department_id}`;
+    window.location.href = url;
 }
 
 function viewTicket(id) {
-    window.location.href = `../tickets/view.php?id=${id}`;
+    window.location.href = `../tickets/detail.php?id=${id}`;
 }
 
 function goToTickets(status) {

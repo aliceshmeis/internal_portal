@@ -11,5 +11,5 @@ require_once __DIR__ . '/../../../core/Request.php';
 require_once __DIR__ . '/../../../app/Controllers/DepartmentController.php';
 
 $controller = new DepartmentController();
-echo $controller->list();
+echo $controller->listByCampus();
 ?>

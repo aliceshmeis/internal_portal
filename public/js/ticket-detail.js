@@ -1,7 +1,8 @@
-// ticket-detail.js — with subtasks, department-based user loading
+// ticket-detail.js — with subtasks, department-based user loading, return & resubmit
 
-let currentTicket = null;
-let allUsers      = [];
+let currentTicket   = null;
+let allUsers        = [];
+let currentSubtasks = [];
 
 const STATUS_ORDER = ['Open', 'In Progress', 'Pending', 'Resolved', 'Closed'];
 
@@ -79,22 +80,74 @@ function renderTicket(ticket) {
     }
 
     renderAttachments(ticket.attachments || []);
+    renderReturnedBanner(ticket);
 
     if (IS_ADMIN) {
         const statusSelect = document.getElementById('status-select');
         if (statusSelect) statusSelect.value = ticket.status;
+
         const btnResolve = document.getElementById('btn-resolve');
         if (ticket.status === 'Closed' || ticket.status === 'Resolved')
             btnResolve?.setAttribute('disabled', true);
+        else
+            btnResolve?.removeAttribute('disabled');
+
+        // Show/hide Return button in more menu
+        const btnReturn = document.getElementById('btn-return');
+        if (btnReturn)
+            btnReturn.style.display = ['Closed', 'Returned'].includes(ticket.status) ? 'none' : 'block';
     }
 }
 
+// ─── RETURNED BANNER + RESUBMIT FORM ─────────────────────────────────────────
+
+function renderReturnedBanner(ticket) {
+    const banner = document.getElementById('returned-banner');
+    if (!banner) return;
+
+    if (ticket.status !== 'Returned') {
+        banner.style.display = 'none';
+        return;
+    }
+
+    banner.style.display = 'block';
+
+    const resubmitForm = document.getElementById('resubmit-form');
+    if (resubmitForm) {
+        const isCreator = (parseInt(ticket.created_by) === CURRENT_USER_ID);
+        resubmitForm.style.display = (!IS_ADMIN && isCreator) ? 'block' : 'none';
+
+        if (!IS_ADMIN && isCreator) {
+            document.getElementById('rs-title').value       = ticket.title       || '';
+            document.getElementById('rs-description').value = ticket.description || '';
+            document.getElementById('rs-priority').value    = ticket.priority    || 'Medium';
+            document.getElementById('rs-category').value    = ticket.category    || '';
+            document.getElementById('rs-building').value    = ticket.building    || '';
+            document.getElementById('rs-floor').value       = ticket.floor       || '';
+            document.getElementById('rs-room').value        = ticket.room        || '';
+        }
+    }
+}
+
+// ─── STATUS FLOW ──────────────────────────────────────────────────────────────
+
 function renderStatusFlow(currentStatus) {
-    const steps    = document.querySelectorAll('.td-flow-step');
-    const lines    = document.querySelectorAll('.td-flow-line');
+    const steps   = document.querySelectorAll('.td-flow-step');
+    const lines   = document.querySelectorAll('.td-flow-line');
+
+    if (currentStatus === 'Returned') {
+        steps.forEach(step => {
+            step.classList.remove('completed', 'active');
+            if (step.dataset.step === 'Returned') step.classList.add('active');
+        });
+        lines.forEach(line => line.style.background = '#e5e7eb');
+        return;
+    }
+
     const currentI = STATUS_ORDER.indexOf(currentStatus);
     steps.forEach((step, i) => {
         step.classList.remove('completed', 'active');
+        if (step.dataset.step === 'Returned') return;
         if (i < currentI)        step.classList.add('completed');
         else if (i === currentI) step.classList.add('active');
     });
@@ -135,6 +188,75 @@ function renderAttachments(attachments) {
         </a>`).join('');
 }
 
+// ─── RETURN TICKET (Admin) ────────────────────────────────────────────────────
+
+function openReturnModal() {
+    document.getElementById('more-menu').classList.remove('open');
+    document.getElementById('return-reason').value = '';
+    document.getElementById('returnModalOverlay').classList.add('open');
+}
+
+function closeReturnModal() {
+    document.getElementById('returnModalOverlay').classList.remove('open');
+}
+
+async function submitReturn() {
+    const reason = document.getElementById('return-reason').value.trim();
+    if (!reason) { showToast('Return reason is required', 'error'); return; }
+
+    const btn = document.getElementById('btn-return-submit');
+    btn.disabled = true; btn.textContent = 'Returning...';
+
+    try {
+        const res  = await fetch(`${API_BASE}/tickets/return.php`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+            body: JSON.stringify({ id: TICKET_ID, reason })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast('Ticket returned to requester', 'success');
+            closeReturnModal();
+            await loadTicket();
+            loadComments();
+        } else {
+            showToast(data.message || 'Failed', 'error');
+        }
+    } catch (e) { showToast('Network error', 'error'); }
+    finally { btn.disabled = false; btn.textContent = 'Return Ticket'; }
+}
+
+// ─── RESUBMIT TICKET (Requester) ──────────────────────────────────────────────
+
+async function resubmitTicket() {
+    const btn = document.getElementById('btn-resubmit');
+    btn.disabled = true; btn.textContent = 'Resubmitting...';
+
+    try {
+        const res  = await fetch(`${API_BASE}/tickets/resubmit.php`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+            body: JSON.stringify({
+                id:          TICKET_ID,
+                title:       document.getElementById('rs-title').value.trim(),
+                description: document.getElementById('rs-description').value.trim(),
+                priority:    document.getElementById('rs-priority').value,
+                category:    document.getElementById('rs-category').value,
+                building:    document.getElementById('rs-building').value.trim() || null,
+                floor:       document.getElementById('rs-floor').value.trim()    || null,
+                room:        document.getElementById('rs-room').value.trim()     || null,
+            })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast('Ticket resubmitted successfully!', 'success');
+            await loadTicket();
+            loadComments();
+        } else {
+            showToast(data.message || 'Failed', 'error');
+        }
+    } catch (e) { showToast('Network error', 'error'); }
+    finally { btn.disabled = false; btn.textContent = '↑ Resubmit Ticket'; }
+}
+
 // ─── SUBTASKS ─────────────────────────────────────────────────────────────────
 
 async function loadSubtasks() {
@@ -146,6 +268,8 @@ async function loadSubtasks() {
 }
 
 function renderSubtasks(subtasks) {
+    currentSubtasks = subtasks;
+
     const list       = document.getElementById('subtask-list');
     const countBadge = document.getElementById('subtask-count');
     const active     = subtasks.filter(s => s.status !== 'Done').length;
@@ -191,13 +315,22 @@ function renderSubtaskItem(s) {
             <button class="btn-my-status" onclick="updateMySubtaskStatus(${s.id})">Save</button>
         </div>` : '';
 
+    const adminActionsHtml = IS_ADMIN ? `
+        <div class="subtask-admin-actions">
+            <button class="btn-subtask-edit"   onclick="openEditSubtaskModal(${s.id})">✏️ Edit</button>
+            <button class="btn-subtask-delete" onclick="deleteSubtask(${s.id})">🗑️ Delete</button>
+        </div>` : '';
+
     const commentsHtml = renderSubtaskCommentsList(s.comments || []);
 
     return `
         <div class="subtask-item" id="subtask-item-${s.id}">
             <div class="subtask-item-header">
                 <div class="subtask-title">${escapeHtml(s.title)}</div>
-                <span class="subtask-status ${statusClass}">${s.status}</span>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span class="subtask-status ${statusClass}">${s.status}</span>
+                    ${adminActionsHtml}
+                </div>
             </div>
             <div class="subtask-meta">
                 ${s.priority ? `<span>Priority: <strong>${escapeHtml(s.priority)}</strong></span>` : ''}
@@ -276,7 +409,6 @@ async function addSubtaskComment(subtask_id) {
 
 function openSubtaskModal() {
     document.getElementById('subtaskModalOverlay').classList.add('open');
-    // Reset to initial state
     setActiveType(null);
     document.getElementById('sm-dept-group').style.display  = 'none';
     document.getElementById('sm-users-group').style.display = 'none';
@@ -325,7 +457,7 @@ async function selectDeptType(type) {
 }
 
 async function onDepartmentChange() {
-    const dept_id = document.getElementById('sm-department').value;
+    const dept_id  = document.getElementById('sm-department').value;
     const userList = document.getElementById('sm-user-list');
 
     if (!dept_id) {
@@ -377,10 +509,74 @@ async function submitSubtask() {
             })
         });
         const data = await res.json();
-        if (data.success) { showToast('Subtask created', 'success'); closeSubtaskModal(); loadSubtasks(); }
-        else showToast(data.message || 'Failed', 'error');
+        if (data.success) {
+            showToast('Subtask created', 'success');
+            closeSubtaskModal();
+            await loadSubtasks();
+            await loadTicket();
+        } else showToast(data.message || 'Failed', 'error');
     } catch (e) { showToast('Network error', 'error'); }
     finally { btn.disabled = false; btn.textContent = 'Create Subtask'; }
+}
+
+// ─── EDIT SUBTASK MODAL ───────────────────────────────────────────────────────
+
+function openEditSubtaskModal(subtask_id) {
+    const subtask = currentSubtasks.find(s => s.id === subtask_id);
+    if (!subtask) return;
+
+    document.getElementById('edit-sm-id').value          = subtask.id;
+    document.getElementById('edit-sm-title').value       = subtask.title       || '';
+    document.getElementById('edit-sm-description').value = subtask.description || '';
+    document.getElementById('edit-sm-priority').value    = subtask.priority    || '';
+    document.getElementById('edit-sm-due-date').value    = subtask.due_date    ? subtask.due_date.split('T')[0] : '';
+
+    document.getElementById('editSubtaskModalOverlay').classList.add('open');
+}
+
+function closeEditSubtaskModal() {
+    document.getElementById('editSubtaskModalOverlay').classList.remove('open');
+}
+
+async function submitEditSubtask() {
+    const subtask_id = document.getElementById('edit-sm-id').value;
+    const title      = document.getElementById('edit-sm-title').value.trim();
+    if (!title) { showToast('Title is required', 'error'); return; }
+
+    const btn = document.getElementById('btn-edit-sm-submit');
+    btn.disabled = true; btn.textContent = 'Saving...';
+
+    try {
+        const res  = await fetch(`${API_BASE}/subtasks/update.php`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+            body: JSON.stringify({
+                subtask_id:  parseInt(subtask_id),
+                title,
+                description: document.getElementById('edit-sm-description').value.trim() || null,
+                priority:    document.getElementById('edit-sm-priority').value            || null,
+                due_date:    document.getElementById('edit-sm-due-date').value            || null,
+            })
+        });
+        const data = await res.json();
+        if (data.success) { showToast('Subtask updated', 'success'); closeEditSubtaskModal(); loadSubtasks(); }
+        else showToast(data.message || 'Failed', 'error');
+    } catch (e) { showToast('Network error', 'error'); }
+    finally { btn.disabled = false; btn.textContent = 'Save Changes'; }
+}
+
+// ─── DELETE SUBTASK ───────────────────────────────────────────────────────────
+
+async function deleteSubtask(subtask_id) {
+    if (!confirm('Delete this subtask? This cannot be undone.')) return;
+    try {
+        const res  = await fetch(`${API_BASE}/subtasks/delete.php`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+            body: JSON.stringify({ subtask_id })
+        });
+        const data = await res.json();
+        if (data.success) { showToast('Subtask deleted', 'success'); loadSubtasks(); }
+        else showToast(data.message || 'Failed', 'error');
+    } catch (e) { showToast('Network error', 'error'); }
 }
 
 // ─── TICKET COMMENTS ──────────────────────────────────────────────────────────
@@ -399,11 +595,17 @@ function renderTimeline(comments) {
         container.innerHTML = '<div class="td-no-comments">No activity yet. Be the first to comment.</div>';
         return;
     }
-    container.innerHTML = comments.map(c => `
+    container.innerHTML = comments.map(c => {
+        const isReturn   = c.comment.startsWith('[Return Reason]');
+        const isResubmit = c.comment.startsWith('[Resubmitted]');
+        const bubbleClass = isReturn   ? 'td-timeline-bubble bubble-return'
+                          : isResubmit ? 'td-timeline-bubble bubble-resubmit'
+                          : 'td-timeline-bubble';
+        return `
         <div class="td-timeline-item">
             <div class="td-timeline-avatar">${getInitials(c.user_name || 'U')}</div>
             <div class="td-timeline-body">
-                <div class="td-timeline-bubble">
+                <div class="${bubbleClass}">
                     <div class="td-timeline-header">
                         <span class="td-timeline-author">${escapeHtml(c.user_name || 'Unknown')}</span>
                         <span class="td-timeline-time">${formatDate(c.created_at)}</span>
@@ -411,7 +613,8 @@ function renderTimeline(comments) {
                     <div class="td-timeline-text">${escapeHtml(c.comment)}</div>
                 </div>
             </div>
-        </div>`).join('');
+        </div>`;
+    }).join('');
 }
 
 async function addComment() {

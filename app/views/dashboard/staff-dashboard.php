@@ -121,48 +121,9 @@ $first_name = explode(' ', $user_name)[0];
 
             <!-- Category Cards -->
             <div class="section-title">Submit a Request</div>
-            <div class="action-grid">
-                <div class="action-card-large" onclick="createTicket('IT & Systems')">
-                    <div class="card-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg></div>
-                    <div class="card-title">IT & Systems</div>
-                    <div class="card-description">Login, email, network, hardware</div>
-                </div>
-                <div class="action-card-large" onclick="createTicket('Registrar Services')">
-                    <div class="card-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg></div>
-                    <div class="card-title">Registrar</div>
-                    <div class="card-description">Enrollment, transcripts, records</div>
-                </div>
-                <div class="action-card-large" onclick="createTicket('Human Resources')">
-                    <div class="card-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></div>
-                    <div class="card-title">Human Resources</div>
-                    <div class="card-description">Payroll, leave, HR documents</div>
-                </div>
-                <div class="action-card-large" onclick="createTicket('Finance')">
-                    <div class="card-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></div>
-                    <div class="card-title">Finance</div>
-                    <div class="card-description">Tuition, invoices, refunds</div>
-                </div>
-                <div class="action-card-large" onclick="createTicket('Academic Request')">
-                    <div class="card-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg></div>
-                    <div class="card-title">Academic Request</div>
-                    <div class="card-description">Course override, grade, approvals</div>
-                </div>
-                <div class="action-card-large" onclick="createTicket('Facilities')">
-                    <div class="card-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></div>
-                    <div class="card-title">Facilities</div>
-                    <div class="card-description">Classroom, AC, electrical</div>
-                </div>
-                <div class="action-card-large" onclick="createTicket('Library')">
-                    <div class="card-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg></div>
-                    <div class="card-title">Library</div>
-                    <div class="card-description">Borrowing, resources, account</div>
-                </div>
-                <div class="action-card-large" onclick="createTicket('Student Affairs')">
-                    <div class="card-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>
-                    <div class="card-title">Student Affairs</div>
-                    <div class="card-description">Activities, student ID, support</div>
-                </div>
-            </div>
+            <div class="action-grid" id="action-grid">
+    <div class="mini-table-empty" id="depts-loading">Loading departments...</div>
+</div>
 
             <!-- Two Tables -->
             <div class="tables-grid">

@@ -36,45 +36,29 @@ $user_role = $_SESSION['role'];
             <div class="sidebar-header">
                 <img src="/internal_portal/public/images/liulogo.png" alt="LIU" style="height:36px;object-fit:contain;">                <div class="sidebar-title">Internal Portal</div>
             </div>
-            <nav class="sidebar-nav">
-                <div class="sidebar-nav-section">
-                    <div class="sidebar-nav-section-title">Main</div>
-                    <a href="../dashboard/dashboard.php" class="sidebar-nav-item">
-                        <span class="sidebar-nav-icon icon-dashboard"></span>
-                        <span class="sidebar-nav-text">Dashboard</span>
-                    </a>
-                    <a href="../tickets/list.php" class="sidebar-nav-item">
-                        <span class="sidebar-nav-icon icon-tickets"></span>
-                        <span class="sidebar-nav-text">Tickets</span>
-                    </a>
-                    <a href="../assets/list.php" class="sidebar-nav-item">
-                        <span class="sidebar-nav-icon icon-assets"></span>
-                        <span class="sidebar-nav-text">Assets</span>
-                    </a>
-                </div>
-                <div class="sidebar-nav-section">
-                    <div class="sidebar-nav-section-title">Inventory</div>
-                    <a href="../stock/list.php" class="sidebar-nav-item">
-                        <span class="sidebar-nav-icon icon-stock"></span>
-                        <span class="sidebar-nav-text">Stock</span>
-                    </a>
-                    <a href="../purchase-orders/list.php" class="sidebar-nav-item">
-                        <span class="sidebar-nav-icon icon-po"></span>
-                        <span class="sidebar-nav-text">Purchase Orders</span>
-                    </a>
-                </div>
-                <div class="sidebar-nav-section">
-                    <div class="sidebar-nav-section-title">Settings</div>
-                    <a href="list.php" class="sidebar-nav-item active">
-                        <span class="sidebar-nav-icon icon-users"></span>
-                        <span class="sidebar-nav-text">Users</span>
-                    </a>
-                    <a href="../reports/index.php" class="sidebar-nav-item">
-                        <span class="sidebar-nav-icon icon-reports"></span>
-                        <span class="sidebar-nav-text">Reports</span>
-                    </a>
-                </div>
-            </nav>
+<nav class="sidebar-nav">
+    <div class="sidebar-nav-section">
+        <div class="sidebar-nav-section-title">Main</div>
+        <a href="../dashboard/dashboard.php" class="sidebar-nav-item"><span class="sidebar-nav-icon icon-dashboard"></span><span class="sidebar-nav-text">Dashboard</span></a>
+        <a href="../tickets/list.php"        class="sidebar-nav-item"><span class="sidebar-nav-icon icon-tickets"></span><span class="sidebar-nav-text">Tickets</span></a>
+        <a href="../assets/list.php"         class="sidebar-nav-item"><span class="sidebar-nav-icon icon-assets"></span><span class="sidebar-nav-text">Assets</span></a>
+    </div>
+    <div class="sidebar-nav-section">
+        <div class="sidebar-nav-section-title">Inventory</div>
+        <a href="../stock/list.php"           class="sidebar-nav-item"><span class="sidebar-nav-icon icon-stock"></span><span class="sidebar-nav-text">Stock</span></a>
+        <a href="../purchase-orders/list.php" class="sidebar-nav-item"><span class="sidebar-nav-icon icon-po"></span><span class="sidebar-nav-text">Purchase Orders</span></a>
+    </div>
+    <div class="sidebar-nav-section">
+        <div class="sidebar-nav-section-title">Procurement</div>
+        <a href="../suppliers/list.php"  class="sidebar-nav-item"><span class="sidebar-nav-icon icon-users"></span><span class="sidebar-nav-text">Suppliers</span></a>
+        <a href="../quotations/list.php" class="sidebar-nav-item"><span class="sidebar-nav-icon icon-po"></span><span class="sidebar-nav-text">Quotations</span></a>
+    </div>
+    <div class="sidebar-nav-section">
+        <div class="sidebar-nav-section-title">Administration</div>
+        <a href="../users/list.php"    class="sidebar-nav-item active"><span class="sidebar-nav-icon icon-users"></span><span class="sidebar-nav-text">Users</span></a>
+        <a href="../reports/index.php" class="sidebar-nav-item"><span class="sidebar-nav-icon icon-reports"></span><span class="sidebar-nav-text">Reports</span></a>
+    </div>
+</nav>
             <div class="sidebar-footer">
                 <a href="/internal_portal/app/views/auth/logout.php" class="sidebar-nav-item">
                     <span class="sidebar-nav-icon icon-logout"></span>

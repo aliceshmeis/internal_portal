@@ -168,37 +168,41 @@ public static function getByUser($user_id) {
         try {
             $database = new Database();
             $db = $database->getConnection();
-            
+
             $query = "SELECT t.*, u.name as creator_name, a.name as assignee_name, c.campus_name
                       FROM tickets t
                       LEFT JOIN users u ON t.created_by = u.id
                       LEFT JOIN users a ON t.assigned_to = a.id
                       LEFT JOIN campuses c ON t.campus_id = c.id
                       WHERE t.campus_id = :campus_id";
-            
+
+            if (!empty($filters['submitted_to_admin'])) {
+                $query .= " AND t.submitted_to_admin = 1";
+            }
+
             if (!empty($filters['status'])) {
                 $query .= " AND t.status = :status";
             }
-            
+
             if (!empty($filters['priority'])) {
                 $query .= " AND t.priority = :priority";
             }
-            
+
             $query .= " ORDER BY t.created_at DESC";
-            
+
             $stmt = $db->prepare($query);
             $stmt->bindParam(':campus_id', $campus_id);
-            
+
             if (!empty($filters['status'])) {
                 $stmt->bindParam(':status', $filters['status']);
             }
-            
+
             if (!empty($filters['priority'])) {
                 $stmt->bindParam(':priority', $filters['priority']);
             }
-            
+
             $stmt->execute();
-            
+
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
             return [];
@@ -444,7 +448,7 @@ public static function getByUser($user_id) {
             FROM tickets t
             LEFT JOIN users u ON t.created_by = u.id
             WHERE t.assigned_to = :user_id
-              AND t.status NOT IN ('Closed', 'Resolved')
+              AND t.status NOT IN ('Closed')
             ORDER BY t.updated_at DESC
         ");
         $stmt->execute([':user_id' => $user_id]);
@@ -482,5 +486,29 @@ public static function getByUser($user_id) {
 
         return $stats;
     }
+    /**
+ * Find the department head for a given department and campus
+ */
+public static function findDeptHead($department_id, $campus_id) {
+    try {
+        $db   = (new Database())->getConnection();
+        $stmt = $db->prepare("
+            SELECT id FROM users
+            WHERE department_id = :department_id
+              AND campus_id     = :campus_id
+              AND is_head       = 1
+              AND is_active     = 1
+            LIMIT 1
+        ");
+        $stmt->execute([
+            ':department_id' => $department_id,
+            ':campus_id'     => $campus_id,
+        ]);
+        $head = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $head ? (int) $head['id'] : null;
+    } catch (Exception $e) {
+        return null;
+    }
+}
 }
 ?>

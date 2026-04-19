@@ -121,13 +121,14 @@ class UserController {
     try {
         $db   = (new Database())->getConnection();
         $stmt = $db->prepare(
-            "SELECT u.id, u.name, u.email, u.role, c.campus_name
-             FROM users u
-             LEFT JOIN campuses c ON c.id = u.campus_id
-             WHERE u.is_active = 1
-               AND u.campus_id = :campus_id
-               AND u.role = 'Staff'
-             ORDER BY u.name ASC"
+           "SELECT u.id, u.name, u.email, u.role, c.campus_name
+ FROM users u
+ LEFT JOIN campuses c ON c.id = u.campus_id
+ WHERE u.is_active = 1
+   AND u.campus_id = :campus_id
+   AND u.role = 'Staff'
+   AND u.is_head = 1
+ ORDER BY u.name ASC"
         );
         $stmt->execute([':campus_id' => Auth::campusId()]);
         $users = $stmt->fetchAll(PDO::FETCH_ASSOC);

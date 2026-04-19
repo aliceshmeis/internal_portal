@@ -27,6 +27,140 @@ if (!$ticket_id) {
     <link rel="stylesheet" href="/internal_portal/public/css/admin-layout.css">
     <link rel="stylesheet" href="/internal_portal/public/css/ticket-detail.css">
     <link rel="stylesheet" href="/internal_portal/public/css/subtask.css">
+    <style>
+        /* ── Returned Banner ── */
+        .returned-banner {
+            display: none;
+            background: #fef2f2;
+            border: 1.5px solid #fca5a5;
+            border-left: 5px solid #dc2626;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-bottom: 18px;
+            color: #991b1b;
+        }
+        .returned-banner-title {
+            font-weight: 700;
+            font-size: 15px;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .returned-banner-body {
+            font-size: 13.5px;
+            color: #7f1d1d;
+        }
+
+        /* ── Resubmit Form ── */
+        .resubmit-form {
+            display: none;
+            background: #fff;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 18px;
+        }
+        .resubmit-form-title {
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--color-text-primary);
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .rs-form-group { margin-bottom: 14px; }
+        .rs-label {
+            display: block;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+        }
+        .rs-input, .rs-select, .rs-textarea {
+            width: 100%;
+            padding: 8px 11px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 13.5px;
+            color: var(--color-text-primary);
+            background: #fafafa;
+            box-sizing: border-box;
+        }
+        .rs-textarea { resize: vertical; min-height: 90px; }
+        .rs-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+        .btn-resubmit {
+            background: var(--color-primary);
+            color: #fff;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 7px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 6px;
+            width: 100%;
+        }
+        .btn-resubmit:hover { opacity: .9; }
+
+        /* ── Timeline bubble variants ── */
+        .bubble-return  { background: #fef2f2 !important; border-left: 3px solid #dc2626; }
+        .bubble-resubmit { background: #f0fdf4 !important; border-left: 3px solid #16a34a; }
+
+        /* ── Return modal ── */
+        .return-modal-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,.45);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .return-modal-overlay.open { display: flex; }
+        .return-modal {
+            background: #fff;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 20px 60px rgba(0,0,0,.18);
+            overflow: hidden;
+        }
+        .return-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 22px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .return-modal-title { font-weight: 700; font-size: 16px; color: #dc2626; }
+        .return-modal-close {
+            background: none; border: none; font-size: 18px;
+            cursor: pointer; color: var(--color-text-secondary);
+        }
+        .return-modal-body { padding: 20px 22px; }
+        .return-modal-body textarea {
+            width: 100%; padding: 10px 12px;
+            border: 1px solid #d1d5db; border-radius: 7px;
+            font-size: 13.5px; resize: vertical; min-height: 110px;
+            box-sizing: border-box;
+        }
+        .return-modal-footer {
+            display: flex; gap: 10px; justify-content: flex-end;
+            padding: 14px 22px; border-top: 1px solid #f3f4f6;
+        }
+        .btn-return-cancel {
+            padding: 9px 18px; border-radius: 7px; border: 1px solid #e5e7eb;
+            background: #fff; cursor: pointer; font-size: 13.5px;
+        }
+        .btn-return-confirm {
+            padding: 9px 18px; border-radius: 7px; border: none;
+            background: #dc2626; color: #fff; cursor: pointer;
+            font-size: 13.5px; font-weight: 600;
+        }
+        .btn-return-confirm:hover { background: #b91c1c; }
+    </style>
 </head>
 <body>
 <div class="mobile-overlay" id="mobileOverlay"></div>
@@ -125,6 +259,65 @@ if (!$ticket_id) {
                     Back to Tickets
                 </a>
 
+                <!-- ── RETURNED BANNER ── -->
+                <div class="returned-banner" id="returned-banner">
+                    <div class="returned-banner-title">⚠️ This ticket has been returned</div>
+                    <div class="returned-banner-body">The admin has returned this ticket and is awaiting more information. Please review the return reason in the Activity section below, update the ticket, and resubmit.</div>
+                </div>
+
+                <!-- ── RESUBMIT FORM (requester only, shown when status = Returned) ── -->
+                <?php if (!$is_admin): ?>
+                <div class="resubmit-form" id="resubmit-form">
+                    <div class="resubmit-form-title">✏️ Update & Resubmit Your Ticket</div>
+                    <div class="rs-form-group">
+                        <label class="rs-label">Title <span style="color:#dc2626;">*</span></label>
+                        <input type="text" id="rs-title" class="rs-input" placeholder="Ticket title">
+                    </div>
+                    <div class="rs-form-group">
+                        <label class="rs-label">Description <span style="color:#dc2626;">*</span></label>
+                        <textarea id="rs-description" class="rs-textarea" placeholder="Describe the issue in detail..."></textarea>
+                    </div>
+                    <div class="rs-row">
+                        <div class="rs-form-group">
+                            <label class="rs-label">Priority</label>
+                            <select id="rs-priority" class="rs-select">
+                                <option value="Low">Low</option>
+                                <option value="Medium">Medium</option>
+                                <option value="High">High</option>
+                                <option value="Critical">Critical</option>
+                            </select>
+                        </div>
+                        <div class="rs-form-group">
+                            <label class="rs-label">Category</label>
+                            <select id="rs-category" class="rs-select">
+                                <option value="">Select...</option>
+                                <option value="Hardware">Hardware</option>
+                                <option value="Software">Software</option>
+                                <option value="Network">Network</option>
+                                <option value="Access">Access</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="rs-form-group">
+                            <label class="rs-label">Building</label>
+                            <input type="text" id="rs-building" class="rs-input" placeholder="Building">
+                        </div>
+                    </div>
+                    <div class="rs-row">
+                        <div class="rs-form-group">
+                            <label class="rs-label">Floor</label>
+                            <input type="text" id="rs-floor" class="rs-input" placeholder="Floor">
+                        </div>
+                        <div class="rs-form-group">
+                            <label class="rs-label">Room</label>
+                            <input type="text" id="rs-room" class="rs-input" placeholder="Room">
+                        </div>
+                        <div></div>
+                    </div>
+                    <button class="btn-resubmit" id="btn-resubmit" onclick="resubmitTicket()">↑ Resubmit Ticket</button>
+                </div>
+                <?php endif; ?>
+
                 <!-- HEADER CARD -->
                 <div class="td-header-card">
                     <div class="td-header-top">
@@ -151,6 +344,7 @@ if (!$ticket_id) {
                                 <button class="td-btn-more" onclick="toggleMoreMenu()">More ▾</button>
                                 <div class="td-more-menu" id="more-menu">
                                     <button class="td-more-item" onclick="reopenTicket()">↩ Reopen</button>
+                                    <button class="td-more-item" id="btn-return" onclick="openReturnModal()" style="color:#dc2626;">↵ Return to Requester</button>
                                     <button class="td-more-item danger" onclick="closeTicket()">✕ Close Ticket</button>
                                 </div>
                             </div>
@@ -185,6 +379,13 @@ if (!$ticket_id) {
                             <div class="td-flow-label">
                                 <div class="td-flow-dot">4</div>
                                 <span class="td-flow-text">Resolved</span>
+                            </div>
+                        </div>
+                        <div class="td-flow-line"></div>
+                        <div class="td-flow-step" data-step="Returned">
+                            <div class="td-flow-label">
+                                <div class="td-flow-dot" style="background:#dc2626;">↵</div>
+                                <span class="td-flow-text" style="color:#dc2626;">Returned</span>
                             </div>
                         </div>
                         <div class="td-flow-line"></div>
@@ -337,6 +538,28 @@ if (!$ticket_id) {
     </main>
 </div>
 
+<!-- ── RETURN TICKET MODAL (Admin) ── -->
+<?php if ($is_admin): ?>
+<div class="return-modal-overlay" id="returnModalOverlay">
+    <div class="return-modal">
+        <div class="return-modal-header">
+            <div class="return-modal-title">↵ Return Ticket to Requester</div>
+            <button class="return-modal-close" onclick="closeReturnModal()">&#x2715;</button>
+        </div>
+        <div class="return-modal-body">
+            <label style="display:block;font-size:13px;font-weight:600;margin-bottom:8px;color:var(--color-text-secondary);">
+                Return Reason <span style="color:#dc2626;">*</span>
+            </label>
+            <textarea id="return-reason" placeholder="Explain what information or changes are needed from the requester..." rows="5"></textarea>
+        </div>
+        <div class="return-modal-footer">
+            <button class="btn-return-cancel" onclick="closeReturnModal()">Cancel</button>
+            <button class="btn-return-confirm" id="btn-return-submit" onclick="submitReturn()">Return Ticket</button>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 <!-- ── ADD SUBTASK MODAL ── -->
 <?php if ($is_admin): ?>
 <div class="subtask-modal-overlay" id="subtaskModalOverlay">
@@ -396,13 +619,54 @@ if (!$ticket_id) {
         </div>
     </div>
 </div>
+
+<!-- ── EDIT SUBTASK MODAL ── -->
+<div class="subtask-modal-overlay" id="editSubtaskModalOverlay">
+    <div class="subtask-modal">
+        <div class="subtask-modal-header">
+            <div class="subtask-modal-title">Edit Subtask</div>
+            <button class="subtask-modal-close" onclick="closeEditSubtaskModal()">&#x2715;</button>
+        </div>
+        <div class="subtask-modal-body">
+            <input type="hidden" id="edit-sm-id">
+            <div class="sm-form-group">
+                <label class="sm-label">Title <span>*</span></label>
+                <input type="text" id="edit-sm-title" class="sm-input" placeholder="Subtask title">
+            </div>
+            <div class="sm-form-group">
+                <label class="sm-label">Description</label>
+                <textarea id="edit-sm-description" class="sm-textarea" placeholder="Optional details..."></textarea>
+            </div>
+            <div class="sm-row">
+                <div class="sm-form-group">
+                    <label class="sm-label">Priority</label>
+                    <select id="edit-sm-priority" class="sm-select">
+                        <option value="">Inherit from ticket</option>
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                        <option value="Critical">Critical</option>
+                    </select>
+                </div>
+                <div class="sm-form-group">
+                    <label class="sm-label">Due Date</label>
+                    <input type="date" id="edit-sm-due-date" class="sm-input">
+                </div>
+            </div>
+        </div>
+        <div class="subtask-modal-footer">
+            <button class="btn-sm-cancel" onclick="closeEditSubtaskModal()">Cancel</button>
+            <button class="btn-sm-submit" id="btn-edit-sm-submit" onclick="submitEditSubtask()">Save Changes</button>
+        </div>
+    </div>
+</div>
 <?php endif; ?>
 
 <script>
-    const TICKET_ID   = <?php echo $ticket_id; ?>;
-    const IS_ADMIN    = <?php echo $is_admin ? 'true' : 'false'; ?>;
-    const API_BASE    = '/internal_portal/api/v1';
-    const USER_INIT   = '<?php echo $user_initials; ?>';
+    const TICKET_ID       = <?php echo $ticket_id; ?>;
+    const IS_ADMIN        = <?php echo $is_admin ? 'true' : 'false'; ?>;
+    const API_BASE        = '/internal_portal/api/v1';
+    const USER_INIT       = '<?php echo $user_initials; ?>';
     const CURRENT_USER_ID = <?php echo (int)$_SESSION['user_id']; ?>;
 </script>
 <script src="/internal_portal/public/js/mobile-menu.js"></script>

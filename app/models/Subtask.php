@@ -302,4 +302,53 @@ class Subtask {
             return [];
         }
     }
+    // ─── UPDATE ───────────────────────────────────────────────────────────────
+public static function update($id, $data) {
+    try {
+        $db   = (new Database())->getConnection();//pdo connection
+        $stmt = $db->prepare("
+            UPDATE ticket_subtasks
+            SET title       = :title,
+                description = :description,
+                priority    = :priority,
+                due_date    = :due_date,
+                updated_at  = NOW()
+            WHERE id = :id
+        ");
+        $stmt->execute([
+            ':id'          => $id,
+            ':title'       => $data['title'],
+            ':description' => $data['description'] ?? null,
+            ':priority'    => $data['priority']    ?? 'Medium',
+            ':due_date'    => $data['due_date']    ?? null,
+        ]);
+
+        // Reassign users if provided
+        if (isset($data['user_ids']) && is_array($data['user_ids'])) {
+            $db->prepare("DELETE FROM ticket_subtask_assignments WHERE subtask_id = :id")
+               ->execute([':id' => $id]);
+            foreach ($data['user_ids'] as $user_id) {//insert new assignment
+                self::assignUser($id, $user_id);//adds rows back into the assignments table.
+            }
+        }
+
+        return self::find($id);//After updating, you return the updated record so the UI can show new values.
+    } catch (Exception $e) {
+        return false;
+    }
+}
+
+// ─── DELETE ───────────────────────────────────────────────────────────────
+public static function delete($id) {
+    try {
+        $db = (new Database())->getConnection();
+        // Assignments and comments cascade if FK is set, otherwise delete manually
+        $db->prepare("DELETE FROM ticket_subtask_assignments WHERE subtask_id = :id")->execute([':id' => $id]);
+        $db->prepare("DELETE FROM subtask_comments WHERE subtask_id = :id")->execute([':id' => $id]);
+        $db->prepare("DELETE FROM ticket_subtasks WHERE id = :id")->execute([':id' => $id]);
+        return true;
+    } catch (Exception $e) {
+        return false;
+    }
+}
 }

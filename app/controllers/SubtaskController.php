@@ -42,7 +42,13 @@ class SubtaskController {
             'user_ids'    => $user_ids,
         ]);
 
-        if ($subtask) return Response::success('Subtask created successfully', $subtask, 201);
+        if ($subtask) {
+    // Change parent ticket status to In Progress if it's still Open
+    if ($ticket['status'] === 'Open') {
+        Ticket::update(intval($input['ticket_id']), ['status' => 'In Progress']);
+    }
+    return Response::success('Subtask created successfully', $subtask, 201);
+}
         return Response::serverError('Failed to create subtask');
     }
 
@@ -180,4 +186,61 @@ class SubtaskController {
         $users = Subtask::getUsersByDepartment($department_id, Auth::campusId());
         return Response::success('Users retrieved', $users, 200, ['count' => count($users)]);
     }
+    // POST api/v1/subtasks/update.php
+public function update() {
+    if (!Auth::check())     return Response::unauthorized();
+    if (!Auth::isAdmin())   return Response::forbidden('Only admins can update subtasks');
+    if (!Request::isPost()) return Response::methodNotAllowed('POST');//REST rules
+
+    $input = Request::json();//reads JSON body from frontend.
+    if (empty($input['subtask_id'])) return Response::error('subtask_id is required', 400);
+    if (empty($input['title']))      return Response::error('title is required', 400);
+
+    $subtask = Subtask::find(intval($input['subtask_id']));//fetch the subtask from database.
+    if (!$subtask) return Response::notFound('Subtask not found');//So no updating something that doesn’t exist.
+
+    $ticket = Ticket::find($subtask['ticket_id']);//You find the parent ticket of this subtask.
+    if ($ticket['campus_id'] != Auth::campusId())//IF ticket campus is NOT equal to user campus
+        return Response::forbidden('You can only manage tickets in your campus');
+
+        //If user_ids exist AND is array:
+        //convert each value to integer (security)
+        //store it, otherwise null
+
+    $user_ids = !empty($input['user_ids']) && is_array($input['user_ids'])
+        ? array_map('intval', $input['user_ids'])
+        : null;
+
+    $updated = Subtask::update(intval($input['subtask_id']), [//call model to update
+        'title'       => trim($input['title']),
+        'description' => !empty($input['description']) ? trim($input['description']) : null,
+        'priority'    => $input['priority'] ?? $subtask['priority'],
+        'due_date'    => $input['due_date']  ?? null,
+        'user_ids'    => $user_ids,
+    ]);
+
+    if ($updated) return Response::success('Subtask updated successfully', $updated);
+    return Response::serverError('Failed to update subtask');
+}
+
+// POST api/v1/subtasks/delete.php
+public function delete() {
+    if (!Auth::check())     return Response::unauthorized();
+    if (!Auth::isAdmin())   return Response::forbidden('Only admins can delete subtasks');
+    if (!Request::isPost()) return Response::methodNotAllowed('POST');
+
+    $input = Request::json();
+    if (empty($input['subtask_id'])) return Response::error('subtask_id is required', 400);
+
+    $subtask = Subtask::find(intval($input['subtask_id']));
+    if (!$subtask) return Response::notFound('Subtask not found');
+
+    $ticket = Ticket::find($subtask['ticket_id']);
+    if ($ticket['campus_id'] != Auth::campusId())
+        return Response::forbidden('You can only manage tickets in your campus');
+
+    $deleted = Subtask::delete(intval($input['subtask_id']));
+    if ($deleted) return Response::success('Subtask deleted successfully', null);
+    return Response::serverError('Failed to delete subtask');
+}
 }

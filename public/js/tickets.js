@@ -68,10 +68,9 @@ function displayTickets() {
     const pageTickets = filteredTickets.slice(startIndex, startIndex + itemsPerPage);
 
     tbody.innerHTML = pageTickets.map(ticket => {
-        const creatorName    = ticket.creator_name  || 'Unknown';
-        const assigneeName   = ticket.assignee_name || null;
+        const creatorName     = ticket.creator_name  || 'Unknown';
+        const assigneeName    = ticket.assignee_name || null;
         const creatorInitials = getInitials(creatorName);
-        const creatorColor   = getAvatarColor(creatorName);
 
         return `
         <tr onclick="viewTicket(${ticket.id})">
@@ -89,14 +88,14 @@ function displayTickets() {
             <td>
                 ${assigneeName
                     ? `<div class="creator-cell">
-                        <div class="creator-avatar" style="background:${getAvatarColor(assigneeName)}">${getInitials(assigneeName)}</div>
+                        <div class="creator-avatar">${getInitials(assigneeName)}</div>
                         <span class="creator-name">${escapeHtml(assigneeName)}</span>
                        </div>`
-                    : '<span class="text-muted">Unassigned</span>'}
+                    : '<span class="unassigned-text">Unassigned</span>'}
             </td>
             <td>
                 <div class="creator-cell">
-                    <div class="creator-avatar" style="background:${creatorColor}">${creatorInitials}</div>
+                    <div class="creator-avatar">${creatorInitials}</div>
                     <span class="creator-name">${escapeHtml(creatorName)}</span>
                 </div>
             </td>
@@ -112,21 +111,30 @@ function getInitials(name) {
     return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 }
 
-function getAvatarColor(name) {
-    const colors = ['#6b7280','#4b5563','#374151','#1e40af','#1d4ed8','#0369a1','#0f766e','#065f46','#166534'];
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    return colors[Math.abs(hash) % colors.length];
-}
+// ── NO random colors — avatars are always neutral gray via CSS ──
+// getAvatarColor() removed intentionally
 
 function getPriorityBadge(priority) {
-    const classes = { 'Low': 'priority-low', 'Medium': 'priority-medium', 'High': 'priority-high', 'Critical': 'priority-critical' };
-    return `<span class="priority-badge ${classes[priority] || 'priority-low'}">${priority}</span>`;
+    const map = {
+        'Low':      { cls: 'priority-low',      label: 'Low' },
+        'Medium':   { cls: 'priority-medium',    label: 'Medium' },
+        'High':     { cls: 'priority-high',      label: 'High' },
+        'Critical': { cls: 'priority-critical',  label: 'Critical' },
+    };
+    const p = map[priority] || map['Low'];
+    return `<span class="priority-badge ${p.cls}">${p.label}</span>`;
 }
 
 function getStatusBadge(status) {
-    const classes = { 'Open': 'status-open', 'In Progress': 'status-in-progress', 'Pending': 'status-pending', 'Resolved': 'status-resolved', 'Closed': 'status-closed' };
-    return `<span class="status-badge ${classes[status] || 'status-open'}">${status}</span>`;
+    const map = {
+        'Open':        'status-open',
+        'In Progress': 'status-in-progress',
+        'Pending':     'status-pending',
+        'Resolved':    'status-resolved',
+        'Closed':      'status-closed',
+    };
+    const cls = map[status] || 'status-closed';
+    return `<span class="status-badge ${cls}">${status}</span>`;
 }
 
 // ── Pagination ────────────────────────────────

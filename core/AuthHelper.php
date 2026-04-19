@@ -176,6 +176,7 @@ class AuthHelper {
             $_SESSION['department_id']   = $user['department_id'];
             $_SESSION['department_name'] = $user['department_name'] ?? null;
             $_SESSION['is_active']       = $user['is_active'];
+            $_SESSION['is_head'] = $user['is_head'] ?? 0;
             $_SESSION['login_method']    = 'email';
             $_SESSION['login_time']      = time(); // Used for session timeout
 

@@ -6,48 +6,62 @@ require_once __DIR__ . '/../models/Ticket.php';
 
 class TicketController {
 
-    public function create() {
-        if (!Auth::check())     return Response::unauthorized();
-        if (!Request::isPost()) return Response::methodNotAllowed('POST');
+public function create() {
+    if (!Auth::check())     return Response::unauthorized();
+    if (!Request::isPost()) return Response::methodNotAllowed('POST');
 
-        $input = Request::json();// read the request body as Json
+    $input = Request::json();
 
-        if (empty($input['title']))       return Response::error('Title is required', 400);//Ticket cannot be created without title
-        if (empty($input['description'])) return Response::error('Description is required', 400);// without desciption
+    if (empty($input['title']))       return Response::error('Title is required', 400);
+    if (empty($input['description'])) return Response::error('Description is required', 400);
 
-        $allowed_priorities = ['Low', 'Medium', 'High', 'Critical'];//allowed prioreties
-        $priority = $input['priority'] ?? 'Medium';//medium by default
-        if (!in_array($priority, $allowed_priorities))
-            return Response::error('Invalid priority. Allowed: ' . implode(', ', $allowed_priorities), 400);
+    $allowed_priorities = ['Low', 'Medium', 'High', 'Critical'];
+    $priority = $input['priority'] ?? 'Medium';
+    if (!in_array($priority, $allowed_priorities))
+        return Response::error('Invalid priority. Allowed: ' . implode(', ', $allowed_priorities), 400);
 
-        $campus_id = $input['campus_id'] ?? Auth::campusId();//use campus id other wise the campus id of the user logged in
-        if (empty($campus_id)) return Response::error('Campus not found for this user', 400);
+    $campus_id = $input['campus_id'] ?? Auth::campusId();
+    if (empty($campus_id)) return Response::error('Campus not found for this user', 400);
 
-        $data = [
-            'title'       => trim($input['title']),
-            'description' => trim($input['description']),
-            'priority'    => $priority,
-            'campus_id'   => $campus_id,
-            'created_by'  => Auth::userId(),
-            'category'    => $input['category'] ?? null,
-            'building'    => !empty($input['building']) ? trim($input['building']) : null,
-            'floor'       => !empty($input['floor'])    ? trim($input['floor'])    : null,
-            'room'        => !empty($input['room'])     ? trim($input['room'])     : null,
-            'ssid'        => !empty($input['ssid'])     ? trim($input['ssid'])     : null,
-        ];
+    $data = [
+        'title'       => trim($input['title']),
+        'description' => trim($input['description']),
+        'priority'    => $priority,
+        'campus_id'   => $campus_id,
+        'created_by'  => Auth::userId(),
+        'category'    => $input['category'] ?? null,
+        'building'    => !empty($input['building']) ? trim($input['building']) : null,
+        'floor'       => !empty($input['floor'])    ? trim($input['floor'])    : null,
+        'room'        => !empty($input['room'])     ? trim($input['room'])     : null,
+        'ssid'        => !empty($input['ssid'])     ? trim($input['ssid'])     : null,
+    ];
 
-        if (isset($input['assigned_to'])) {
-            if (!Auth::isAdmin())
-                return Response::forbidden('Only Admins can assign tickets during creation');
-            if (!is_numeric($input['assigned_to']))
-                return Response::error('assigned_to must be a valid user ID', 400);
-            $data['assigned_to'] = intval($input['assigned_to']);
+    if (isset($input['assigned_to']) && Auth::isAdmin()) {
+        // Admin manually assigning during creation
+        if (!is_numeric($input['assigned_to']))
+            return Response::error('assigned_to must be a valid user ID', 400);
+        $data['assigned_to']      = intval($input['assigned_to']);
+        $data['submitted_to_admin'] = 1;
+
+    } elseif (!Auth::isAdmin()) {
+        $dept_id = Auth::departmentId();
+        if ($dept_id) {
+            $head_id = Ticket::findDeptHead($dept_id, $campus_id);
+            if ($head_id && $head_id !== Auth::userId()) {
+                // Staff ticket — route to department head for approval first
+                $data['assigned_to']        = $head_id;
+                $data['submitted_to_admin'] = 0;
+            } else {
+                // Creator IS the head — goes straight to admin queue
+                $data['submitted_to_admin'] = 1;
+            }
         }
-
-        $ticket = Ticket::create($data);
-        if ($ticket) return Response::success('Ticket created successfully', $ticket, 201);
-        return Response::serverError('Failed to create ticket');
     }
+
+    $ticket = Ticket::create($data);
+    if ($ticket) return Response::success('Ticket created successfully', $ticket, 201);
+    return Response::serverError('Failed to create ticket');
+}
 
     public function myTickets() {
         if (!Auth::check())    return Response::unauthorized();
@@ -65,7 +79,11 @@ class TicketController {
             'priority' => Request::get('priority')
         ];
 
-        // Always scope by campus — admin sees only their campus
+        // Admin only sees tickets that have been approved and submitted by the department head
+        if (Auth::isAdmin()) {
+            $filters['submitted_to_admin'] = 1;
+        }
+
         $tickets = Ticket::getByCampus(Auth::campusId(), $filters);
 
         return Response::success('Tickets retrieved successfully', $tickets, 200, [
@@ -122,7 +140,7 @@ class TicketController {
         if (isset($input['description'])) $updateData['description'] = trim($input['description']);
 
         if (isset($input['status'])) {
-            $allowed = ['Open', 'In Progress', 'Pending', 'Resolved', 'Closed'];
+            $allowed = ['Open', 'In Progress', 'Pending', 'Resolved', 'Closed', 'Returned'];
             if (!in_array($input['status'], $allowed))
                 return Response::error('Invalid status. Allowed: ' . implode(', ', $allowed), 400);
             $updateData['status'] = $input['status'];
@@ -369,5 +387,211 @@ class TicketController {
         $stats = Ticket::getStatsByStatus(Auth::campusId());
         return Response::success('Stats retrieved', $stats);
     }
+    public function returnTicket() {
+    if (!Auth::check())     return Response::unauthorized();
+    if (!Auth::isAdmin())   return Response::forbidden('Only admins can return tickets');
+    if (!Request::isPost()) return Response::methodNotAllowed('POST');
+
+    $input = Request::json();
+    if (empty($input['id']))     return Response::error('Ticket ID is required', 400);
+    if (empty($input['reason'])) return Response::error('Return reason is required', 400);
+
+    $ticket_id = intval($input['id']);
+    $ticket    = Ticket::find($ticket_id);
+    if (!$ticket) return Response::notFound('Ticket not found');
+
+    if ($ticket['campus_id'] != Auth::campusId())
+        return Response::forbidden('You can only return tickets in your campus');
+
+    if (in_array($ticket['status'], ['Closed', 'Returned']))
+        return Response::error('Ticket cannot be returned in its current status', 400);
+
+    // Update status to Returned
+    $updated = Ticket::update($ticket_id, ['status' => 'Returned']);
+    if (!$updated) return Response::serverError('Failed to return ticket');
+
+    // Log reason as a comment
+    $reason_comment = '[Return Reason] ' . trim($input['reason']);
+    Ticket::addComment($ticket_id, Auth::userId(), $reason_comment);
+
+    // Save notification to DB
+    $db = (new Database())->getConnection();
+    $db->prepare("
+        INSERT INTO notifications (user_id, ticket_id, type, message, created_at)
+        VALUES (:user_id, :ticket_id, 'ticket_returned', :message, NOW())
+    ")->execute([
+        ':user_id'   => $ticket['created_by'],
+        ':ticket_id' => $ticket_id,
+        ':message'   => 'Your ticket "' . $ticket['title'] . '" was returned. Reason: ' . trim($input['reason']),
+    ]);
+
+    // Send email to requester
+    require_once __DIR__ . '/../../core/Mailer.php';
+    $creator_email = $ticket['creator_email'];
+    $creator_name  = $ticket['creator_name'];
+    $reason        = htmlspecialchars(trim($input['reason']));
+    $title         = htmlspecialchars($ticket['title']);
+
+    $html = "
+        <div style='font-family:sans-serif;max-width:600px;margin:auto;'>
+            <h2 style='color:#dc2626;'>Ticket Returned</h2>
+            <p>Hi <strong>{$creator_name}</strong>,</p>
+            <p>Your ticket <strong>\"{$title}\"</strong> has been returned by the admin and requires your attention.</p>
+            <div style='background:#fef2f2;border-left:4px solid #dc2626;padding:12px 16px;margin:16px 0;border-radius:4px;'>
+                <strong>Return Reason:</strong><br>{$reason}
+            </div>
+            <p>Please log in to the portal, update your ticket accordingly, and resubmit it.</p>
+            <p style='color:#6b7280;font-size:13px;'>Internal Portal — LIU</p>
+        </div>
+    ";
+
+    Mailer::send($creator_email, $creator_name, 'Your Ticket Has Been Returned', $html);
+
+    return Response::success('Ticket returned successfully', $updated);
+}
+
+public function resubmit() {
+    if (!Auth::check())     return Response::unauthorized();
+    if (!Request::isPost()) return Response::methodNotAllowed('POST');
+
+    $input = Request::json();
+    if (empty($input['id'])) return Response::error('Ticket ID is required', 400);
+
+    $ticket_id = intval($input['id']);
+    $ticket    = Ticket::find($ticket_id);
+    if (!$ticket) return Response::notFound('Ticket not found');
+
+    // Only the original requester can resubmit
+    if ($ticket['created_by'] != Auth::userId())
+        return Response::forbidden('Only the ticket creator can resubmit');
+
+    if ($ticket['status'] !== 'Returned')
+        return Response::error('Only returned tickets can be resubmitted', 400);
+
+    // Re-route back to department head for re-approval
+    $dept_id   = Auth::departmentId();
+    $campus_id = Auth::campusId();
+    $head_id   = $dept_id ? Ticket::findDeptHead($dept_id, $campus_id) : null;
+
+    $updateData = [
+        'status'             => 'Open',
+        'submitted_to_admin' => $head_id ? 0 : 1,
+        'assigned_to'        => $head_id ?: null,
+    ];
+    if (!empty($input['title']))       $updateData['title']       = trim($input['title']);
+    if (!empty($input['description'])) $updateData['description'] = trim($input['description']);
+    if (!empty($input['priority']))    $updateData['priority']    = $input['priority'];
+    if (!empty($input['category']))    $updateData['category']    = $input['category'];
+    if (!empty($input['building']))    $updateData['building']    = trim($input['building']);
+    if (!empty($input['floor']))       $updateData['floor']       = trim($input['floor']);
+    if (!empty($input['room']))        $updateData['room']        = trim($input['room']);
+
+    $updated = Ticket::update($ticket_id, $updateData);
+    if (!$updated) return Response::serverError('Failed to resubmit ticket');
+
+    Ticket::addComment($ticket_id, Auth::userId(), '[Resubmitted] Requester updated and resubmitted this ticket.');
+
+    return Response::success('Ticket resubmitted successfully', $updated);
+}
+
+public function headReturn() {
+    if (!Auth::check())    return Response::unauthorized();
+    if (!Auth::isHead())   return Response::forbidden('Only department heads can return tickets');
+    if (!Request::isPost()) return Response::methodNotAllowed('POST');
+
+    $input = Request::json();
+    if (empty($input['id']))     return Response::error('Ticket ID is required', 400);
+    if (empty($input['reason'])) return Response::error('Return reason is required', 400);
+
+    $ticket_id = intval($input['id']);
+    $ticket    = Ticket::find($ticket_id);
+    if (!$ticket) return Response::notFound('Ticket not found');
+
+    if ($ticket['campus_id'] != Auth::campusId())
+        return Response::forbidden('You can only manage tickets in your campus');
+
+    // Head can only return tickets assigned to them
+    if ($ticket['assigned_to'] != Auth::userId())
+        return Response::forbidden('You can only return tickets assigned to you');
+
+    if (in_array($ticket['status'], ['Closed', 'Returned']))
+        return Response::error('Ticket cannot be returned in its current status', 400);
+
+    // Return ticket to the creator
+    $updated = Ticket::update($ticket_id, [
+        'status'      => 'Returned',
+        'assigned_to' => $ticket['created_by'],
+    ]);
+    if (!$updated) return Response::serverError('Failed to return ticket');
+
+    // Log reason as comment
+    Ticket::addComment($ticket_id, Auth::userId(), '[Head Return] ' . trim($input['reason']));
+
+    // Notify creator
+    $db = (new Database())->getConnection();
+    $db->prepare("
+        INSERT INTO notifications (user_id, ticket_id, type, message, created_at)
+        VALUES (:user_id, :ticket_id, 'ticket_returned', :message, NOW())
+    ")->execute([
+        ':user_id'   => $ticket['created_by'],
+        ':ticket_id' => $ticket_id,
+        ':message'   => 'Your ticket "' . $ticket['title'] . '" was returned by your department head. Reason: ' . trim($input['reason']),
+    ]);
+
+    // Email creator
+    require_once __DIR__ . '/../../core/Mailer.php';
+    $reason = htmlspecialchars(trim($input['reason']));
+    $title  = htmlspecialchars($ticket['title']);
+    $html   = "
+        <div style='font-family:sans-serif;max-width:600px;margin:auto;'>
+            <h2 style='color:#dc2626;'>Ticket Returned by Department Head</h2>
+            <p>Hi <strong>{$ticket['creator_name']}</strong>,</p>
+            <p>Your ticket <strong>\"{$title}\"</strong> has been returned by your department head.</p>
+            <div style='background:#fef2f2;border-left:4px solid #dc2626;padding:12px 16px;margin:16px 0;border-radius:4px;'>
+                <strong>Return Reason:</strong><br>{$reason}
+            </div>
+            <p>Please log in, update your ticket, and resubmit it.</p>
+            <p style='color:#6b7280;font-size:13px;'>Internal Portal — LIU</p>
+        </div>
+    ";
+    Mailer::send($ticket['creator_email'], $ticket['creator_name'], 'Your Ticket Has Been Returned', $html);
+
+    return Response::success('Ticket returned to user successfully', $updated);
+}
+
+public function submitToAdmin() {
+    if (!Auth::check())     return Response::unauthorized();
+    if (!Auth::isHead())    return Response::forbidden('Only department heads can submit tickets to admin');
+    if (!Request::isPost()) return Response::methodNotAllowed('POST');
+
+    $input = Request::json();
+    if (empty($input['id'])) return Response::error('Ticket ID is required', 400);
+
+    $ticket_id = intval($input['id']);
+    $ticket    = Ticket::find($ticket_id);
+    if (!$ticket) return Response::notFound('Ticket not found');
+
+    if ($ticket['campus_id'] != Auth::campusId())
+        return Response::forbidden('You can only manage tickets in your campus');
+
+    // Head can only submit tickets assigned to them
+    if ($ticket['assigned_to'] != Auth::userId())
+        return Response::forbidden('You can only submit tickets assigned to you');
+
+    if ($ticket['submitted_to_admin'])
+        return Response::error('Ticket already submitted to admin', 400);
+
+    if (in_array($ticket['status'], ['Closed', 'Returned']))
+        return Response::error('Ticket cannot be submitted in its current status', 400);
+
+    // Mark as submitted to admin
+    $updated = Ticket::update($ticket_id, ['submitted_to_admin' => 1]);
+    if (!$updated) return Response::serverError('Failed to submit ticket');
+
+    // Log as comment
+    Ticket::addComment($ticket_id, Auth::userId(), '[Submitted to Admin] Department head reviewed and forwarded this ticket.');
+
+    return Response::success('Ticket submitted to admin successfully', $updated);
+}
 }
 ?>
